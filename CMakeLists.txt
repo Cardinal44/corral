@@ -1,18 +1,22 @@
 cmake_minimum_required(VERSION 3.22)
 
-project(corral VERSION 0.1.0 LANGUAGES CXX)
+project(corral VERSION 0.1.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD_REQUIRED ON)
 
 add_compile_options(-Wall -Wextra -Wpedantic -Werror)
 
 add_library(corralcore STATIC
   src/cli.cpp
+  src/procscan.cpp
   src/runner.cpp
   src/spawn.cpp
   src/supervise.cpp
+  src/terminate.cpp
 )
 target_include_directories(corralcore PUBLIC src)
 target_compile_definitions(corralcore PUBLIC CORRAL_VERSION="${PROJECT_VERSION}")
@@ -23,9 +27,28 @@ target_link_libraries(corral PRIVATE corralcore)
 add_executable(unit_tests tests/unit/unit_tests.cpp)
 target_link_libraries(unit_tests PRIVATE corralcore)
 
+# Misbehaving commands for the tests, built into build/faults/.
+set(FAULT_PROGRAMS sleeper term_ignorer daemonizer daemonizer_stay pipe_holder)
+foreach(name IN LISTS FAULT_PROGRAMS)
+  add_executable(corral_${name} faults/corral_${name}.c)
+  set_target_properties(corral_${name} PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/faults)
+endforeach()
+file(COPY faults/corral_script_spawner.sh
+  DESTINATION ${CMAKE_BINARY_DIR}/faults
+  FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
+                   GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
+
 enable_testing()
 
 add_test(NAME unit_tests COMMAND unit_tests)
+
+add_test(NAME integration
+  COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/integration/run_corpus.py)
+set_tests_properties(integration PROPERTIES
+  ENVIRONMENT "CORRAL_BUILD_DIR=${CMAKE_BINARY_DIR}")
 
 # Command-line checks against the real binary.
 set(CORRAL_BIN $<TARGET_FILE:corral>)

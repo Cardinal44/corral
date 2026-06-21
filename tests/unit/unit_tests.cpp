@@ -14,6 +14,7 @@
 #include <vector>
 
 #include "cli.hpp"
+#include "procscan.hpp"
 #include "runner.hpp"
 #include "unique_fd.hpp"
 
@@ -123,6 +124,30 @@ void test_parse_args() {
   CHECK(!parse_args({"--cgroup-mode", "x", "true"}).options);
   CHECK(!parse_args({"--stdin", "tty", "true"}).options);
   CHECK(!parse_args({"--pids", "0", "true"}).options);
+}
+
+void test_parse_proc_stat() {
+  using corral::parse_proc_stat;
+  auto st = parse_proc_stat("1234 (bash) S 1000 1234 1234 34816 1234 4194560 0 0");
+  CHECK(st.has_value());
+  CHECK(st->comm == "bash");
+  CHECK(st->state == 'S');
+  CHECK(st->ppid == 1000);
+  CHECK(st->pgrp == 1234);
+  CHECK(st->session == 1234);
+
+  st = parse_proc_stat("77 (a) (b c) Z 1 2 3 0 -1 0");
+  CHECK(st.has_value());
+  CHECK(st->comm == "a) (b c");
+  CHECK(st->state == 'Z');
+  CHECK(st->ppid == 1);
+  CHECK(st->pgrp == 2);
+  CHECK(st->session == 3);
+
+  CHECK(!parse_proc_stat(""));
+  CHECK(!parse_proc_stat("12 bash S 1 2 3"));
+  CHECK(!parse_proc_stat("12 (bash) S 1 2"));
+  CHECK(!parse_proc_stat("12 (bash) S 1 x 3"));
 }
 
 corral::RunResult result_with(ExitReason reason) {
@@ -240,6 +265,32 @@ void test_capture_and_stdin() {
   CHECK(r.stdout_data.empty());
 }
 
+void test_timeout() {
+  corral::RunSpec spec = capture_spec({"sleep", "30"});
+  spec.wall = 200ms;
+  corral::RunResult r = corral::run(spec);
+  CHECK(r.exit_reason == ExitReason::Timeout);
+  CHECK(r.corral_exit_code == 124);
+  CHECK(r.term_signal == SIGTERM);
+  CHECK(r.termination.term_sent_ms.has_value());
+  CHECK(!r.termination.kill_sent_ms.has_value());
+  CHECK(r.limits_enforced.wall == true);
+  CHECK(r.duration_ms < 2000);
+  CHECK(r.error.empty());
+}
+
+void test_leftovers_are_killed() {
+  // The background sleep outlives sh and must be terminated and reaped.
+  corral::RunResult r = corral::run(capture_spec({"sh", "-c", "sleep 30 & exit 3"}));
+  CHECK(r.exit_reason == ExitReason::Exited);
+  CHECK(r.corral_exit_code == 3);
+  CHECK(r.termination.leftovers_at_trigger == 1);
+  CHECK(r.orphans_reaped == 1);
+  CHECK(r.survivors.empty());
+  CHECK(r.duration_ms < 2000);
+  CHECK(r.error.empty());
+}
+
 void test_spawn_failure() {
   corral::RunResult r = corral::run(capture_spec({"/nonexistent"}));
   CHECK(r.exit_reason == ExitReason::SpawnFailed);
@@ -263,10 +314,13 @@ int main() {
   test_parse_size();
   test_parse_count();
   test_parse_args();
+  test_parse_proc_stat();
   test_exit_code_for();
   test_descriptor_hygiene();
   test_transparency();
   test_capture_and_stdin();
+  test_timeout();
+  test_leftovers_are_killed();
   test_spawn_failure();
   std::printf("%d checks, %d failed\n", g_checks, g_failures);
   return g_failures == 0 ? 0 : 1;

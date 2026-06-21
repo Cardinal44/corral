@@ -1,8 +1,10 @@
 #pragma once
 
 #include <cstddef>
+#include <optional>
 #include <vector>
 
+#include "clock.hpp"
 #include "runner.hpp"
 #include "spawn.hpp"
 #include "unique_fd.hpp"
@@ -31,9 +33,13 @@ class OutputRouter {
 // unreaped). Returns Exited or Signaled, or SetupFailed if waitid failed.
 ExitReason capture_status(const Spawned& child, RunResult& result);
 
-// Returns the trigger. For now the only trigger is main child exit.
-ExitReason supervise(Spawned& child, OutputRouter& out, RunResult& result);
+// Returns the trigger that ends the running phase.
+ExitReason supervise(Spawned& child, OutputRouter& out, RunResult& result,
+                     std::optional<TimePoint> deadline, int cancel_fd);
 
-void drain_available(Spawned& child, OutputRouter& out);
+// Waits up to `timeout_ms` for output or main child exit and handles both.
+// The pidfd is watched only while `status_captured` is false.
+void service(Spawned& child, OutputRouter& out, RunResult& result, bool& status_captured,
+             int timeout_ms);
 
 }  // namespace corral

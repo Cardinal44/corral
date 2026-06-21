@@ -5,7 +5,9 @@
 #include <time.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <cerrno>
+#include <climits>
 #include <cstdlib>
 #include <cstring>
 #include <string>
@@ -39,6 +41,11 @@ void sleep_ms(long ms) {
   timespec ts{0, ms * 1000000L};
   while (nanosleep(&ts, &ts) < 0 && errno == EINTR) {
   }
+}
+
+int poll_timeout(std::optional<TimePoint> deadline) {
+  if (!deadline) return -1;
+  return static_cast<int>(std::min<int64_t>(ms_until(*deadline), INT_MAX));
 }
 
 }  // namespace
@@ -100,21 +107,27 @@ ExitReason capture_status(const Spawned& child, RunResult& result) {
   return ExitReason::Signaled;
 }
 
-ExitReason supervise(Spawned& child, OutputRouter& out, RunResult& result) {
+ExitReason supervise(Spawned& child, OutputRouter& out, RunResult& result,
+                     std::optional<TimePoint> deadline, int cancel_fd) {
   for (;;) {
+    // Recomputed every pass, so EINTR and early wakeups cannot stretch the deadline.
+    const int timeout = poll_timeout(deadline);
+    if (timeout == 0) return ExitReason::Timeout;
+
     // A closed pipe has fd -1, which poll() ignores.
-    pollfd fds[3] = {
+    pollfd fds[4] = {
         {child.pidfd.get(), POLLIN, 0},
         {child.out_r.get(), POLLIN, 0},
         {child.err_r.get(), POLLIN, 0},
+        {cancel_fd, POLLIN, 0},
     };
-    if (poll(fds, 3, -1) < 0) {
+    if (poll(fds, 4, timeout) < 0) {
       if (errno == EINTR) continue;
       if (errno == ENOMEM) {
         sleep_ms(10);
         continue;
       }
-      // EFAULT and EINVAL are impossible with this fixed three-entry array.
+      // EFAULT and EINVAL are impossible with this fixed four-entry array.
       std::abort();
     }
     // Pipes before the pidfd: output the child wrote before exiting must not
@@ -124,12 +137,29 @@ ExitReason supervise(Spawned& child, OutputRouter& out, RunResult& result) {
     // Ends on main child exit without waiting for pipe EOF: a descendant may
     // hold the write ends open indefinitely (F8).
     if (fds[0].revents != 0) return capture_status(child, result);
+    if (fds[3].revents != 0) {
+      result.cancelled = true;
+      return ExitReason::Cancelled;
+    }
   }
 }
 
-void drain_available(Spawned& child, OutputRouter& out) {
-  if (child.out_r) out.pump(Stream::Stdout, child.out_r);
-  if (child.err_r) out.pump(Stream::Stderr, child.err_r);
+void service(Spawned& child, OutputRouter& out, RunResult& result, bool& status_captured,
+             int timeout_ms) {
+  pollfd fds[3] = {
+      {status_captured ? -1 : child.pidfd.get(), POLLIN, 0},
+      {child.out_r.get(), POLLIN, 0},
+      {child.err_r.get(), POLLIN, 0},
+  };
+  // Callers loop on their own deadlines, so a failed or interrupted poll just
+  // ends this pass early.
+  if (poll(fds, 3, timeout_ms) <= 0) return;
+  if (fds[1].revents != 0) out.pump(Stream::Stdout, child.out_r);
+  if (fds[2].revents != 0) out.pump(Stream::Stderr, child.err_r);
+  if (fds[0].revents != 0) {
+    capture_status(child, result);
+    status_captured = true;
+  }
 }
 
 }  // namespace corral

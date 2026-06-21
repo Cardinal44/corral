@@ -3,17 +3,19 @@
 #include <signal.h>
 #include <sys/prctl.h>
 #include <sys/utsname.h>
-#include <sys/wait.h>
 #include <time.h>
 
 #include <cerrno>
 #include <cstdio>
 #include <cstring>
+#include <optional>
+#include <string>
 #include <utility>
 
 #include "clock.hpp"
 #include "spawn.hpp"
 #include "supervise.hpp"
+#include "terminate.hpp"
 
 #ifndef CORRAL_VERSION
 #define CORRAL_VERSION "0.0.0"
@@ -51,12 +53,6 @@ bool ensure_subreaper(std::string& error) {
   return true;
 }
 
-void reap(pid_t pid) {
-  int status;
-  while (waitpid(pid, &status, 0) < 0 && errno == EINTR) {
-  }
-}
-
 }  // namespace
 
 RunResult run(const RunSpec& spec) {
@@ -73,8 +69,8 @@ RunResult run(const RunSpec& spec) {
   r.limits.mem_bytes = spec.mem_bytes;
   r.limits.pids = spec.pids;
   r.limits.output_bytes = spec.max_output_bytes;
-  // No limit is applied yet, so none is reported as enforced.
-  if (spec.wall) r.limits_enforced.wall = false;
+  // The output cap and the mem and pids limits are not applied yet.
+  if (spec.wall) r.limits_enforced.wall = true;
   if (spec.mem_bytes) r.limits_enforced.mem = false;
   if (spec.pids) r.limits_enforced.pids = false;
   if (spec.max_output_bytes) r.limits_enforced.output = false;
@@ -106,20 +102,29 @@ RunResult run(const RunSpec& spec) {
 
   OutputRouter out(spec.output_mode, r);
   ExitReason trigger;
+  bool status_captured;
   if (child.exec_errno) {
     r.spawn_errno = *child.exec_errno;
     r.error = "cannot execute '" + spec.argv[0] + "': " + std::strerror(*child.exec_errno);
     trigger = ExitReason::SpawnFailed;
+    status_captured = true;  // its exit code is corral's, not the command's
   } else {
-    trigger = supervise(child, out, r);
+    std::optional<TimePoint> deadline;
+    if (spec.wall) deadline = deadline_after(start, *spec.wall);
+    trigger = supervise(child, out, r, deadline, spec.cancel_fd);
+    status_captured = trigger != ExitReason::Timeout && trigger != ExitReason::Cancelled;
   }
   r.termination.trigger_ms = ms_since(start);
 
-  // Leftover processes are not terminated yet; only the main child is reaped.
-  drain_available(child, out);
-  reap(child.pid);
-  r.termination.verified_ms = ms_since(start);
+  terminate_and_verify(child, out, r, status_captured, spec.grace, spec.verify_timeout, start);
+  // Every writer is dead now, so this collects the last buffered output.
+  service(child, out, r, status_captured, 0);
 
+  if (!r.survivors.empty()) {
+    if (!r.error.empty()) r.error += "; ";
+    r.error += std::to_string(r.survivors.size()) + " process(es) survived verification:";
+    for (pid_t pid : r.survivors) r.error += " " + std::to_string(pid);
+  }
   return finish(trigger);
 }
 
