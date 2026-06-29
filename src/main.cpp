@@ -1,3 +1,4 @@
+#include <fcntl.h>
 #include <signal.h>
 #include <sys/signalfd.h>
 #include <unistd.h>
@@ -6,8 +7,10 @@
 #include <cstdio>
 #include <cstring>
 #include <string>
+#include <utility>
 #include <vector>
 
+#include "audit.hpp"
 #include "cli.hpp"
 #include "runner.hpp"
 #include "unique_fd.hpp"
@@ -17,6 +20,19 @@ namespace {
 int fail(const char* what) {
   std::fprintf(stderr, "corral: %s: %s\n", what, std::strerror(errno));
   return 125;
+}
+
+// Writes all of `data`, then closes `fd`. Returns false with errno set.
+bool write_and_close(corral::unique_fd fd, const std::string& data) {
+  size_t done = 0;
+  while (done < data.size()) {
+    const ssize_t n = write(fd.get(), data.data() + done, data.size() - done);
+    if (n < 0 && errno == EINTR) continue;
+    if (n < 0) return false;
+    done += static_cast<size_t>(n);
+  }
+  // Some filesystems (NFS) report a failed write only at close.
+  return close(fd.release()) == 0;
 }
 
 }  // namespace
@@ -46,6 +62,17 @@ int main(int argc, char** argv) {
     return 0;
   }
 
+  // Opened before the run, so a bad path fails before the command starts.
+  corral::unique_fd json_fd;
+  if (opts.json_path) {
+    json_fd.reset(open(opts.json_path->c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0666));
+    if (!json_fd) {
+      std::fprintf(stderr, "corral: open --json path '%s': %s\n", opts.json_path->c_str(),
+                   std::strerror(errno));
+      return 125;
+    }
+  }
+
   // Cancellation reaches run() as a readable fd instead of a signal handler.
   sigset_t cancel_signals;
   sigemptyset(&cancel_signals);
@@ -67,5 +94,10 @@ int main(int argc, char** argv) {
     }
   }
   if (!result.error.empty()) std::fprintf(stderr, "corral: %s\n", result.error.c_str());
+  if (json_fd && !write_and_close(std::move(json_fd), corral::audit_json(result))) {
+    std::fprintf(stderr, "corral: write --json path '%s': %s\n", opts.json_path->c_str(),
+                 std::strerror(errno));
+  }
+  if (!opts.quiet) std::fputs(corral::summary_line(result).c_str(), stderr);
   return result.corral_exit_code;
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <optional>
 #include <vector>
 
@@ -15,15 +16,20 @@ enum class Stream { Stdout = 0, Stderr = 1 };
 
 class OutputRouter {
  public:
-  OutputRouter(OutputMode mode, RunResult& result);
+  // `cap` limits stdout plus stderr bytes together (--max-output).
+  OutputRouter(OutputMode mode, std::optional<uint64_t> cap, RunResult& result);
 
   // Reads from `fd` until EAGAIN. Closes `fd` and returns false at EOF.
   bool pump(Stream stream, unique_fd& fd);
+
+  // True once the command wrote more bytes than the cap allows.
+  bool cap_reached() const { return result_.output.truncated; }
 
  private:
   void deliver(Stream stream, const char* data, size_t len);
 
   OutputMode mode_;
+  std::optional<uint64_t> cap_;
   RunResult& result_;
   bool forwarding_[2] = {true, true};  // false after a failed write to that stream
   std::vector<char> buf_;

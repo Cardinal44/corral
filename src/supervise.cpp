@@ -50,8 +50,8 @@ int poll_timeout(std::optional<TimePoint> deadline) {
 
 }  // namespace
 
-OutputRouter::OutputRouter(OutputMode mode, RunResult& result)
-    : mode_(mode), result_(result), buf_(kReadChunk) {}
+OutputRouter::OutputRouter(OutputMode mode, std::optional<uint64_t> cap, RunResult& result)
+    : mode_(mode), cap_(cap), result_(result), buf_(kReadChunk) {}
 
 bool OutputRouter::pump(Stream stream, unique_fd& fd) {
   for (;;) {
@@ -68,6 +68,15 @@ bool OutputRouter::pump(Stream stream, unique_fd& fd) {
 }
 
 void OutputRouter::deliver(Stream stream, const char* data, size_t len) {
+  if (cap_) {
+    // Bytes past the cap are dropped, but the caller keeps reading: a full
+    // pipe would also block the command's cleanup output after SIGTERM.
+    const uint64_t room = *cap_ - (result_.output.stdout_bytes + result_.output.stderr_bytes);
+    if (len > room) {
+      len = static_cast<size_t>(room);
+      result_.output.truncated = true;
+    }
+  }
   const int idx = static_cast<int>(stream);
   if (stream == Stream::Stdout) {
     result_.output.stdout_bytes += len;
@@ -131,9 +140,11 @@ ExitReason supervise(Spawned& child, OutputRouter& out, RunResult& result,
       std::abort();
     }
     // Pipes before the pidfd: output the child wrote before exiting must not
-    // be lost when both become ready in the same poll.
+    // be lost when both become ready in the same poll, and a cap it overran
+    // before exiting is the earlier trigger.
     if (fds[1].revents != 0) out.pump(Stream::Stdout, child.out_r);
     if (fds[2].revents != 0) out.pump(Stream::Stderr, child.err_r);
+    if (out.cap_reached()) return ExitReason::OutputLimit;
     // Ends on main child exit without waiting for pipe EOF: a descendant may
     // hold the write ends open indefinitely (F8).
     if (fds[0].revents != 0) return capture_status(child, result);

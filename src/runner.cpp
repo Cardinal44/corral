@@ -69,11 +69,11 @@ RunResult run(const RunSpec& spec) {
   r.limits.mem_bytes = spec.mem_bytes;
   r.limits.pids = spec.pids;
   r.limits.output_bytes = spec.max_output_bytes;
-  // The output cap and the mem and pids limits are not applied yet.
+  // mem and pids need cgroups, so fallback mode never applies them.
   if (spec.wall) r.limits_enforced.wall = true;
   if (spec.mem_bytes) r.limits_enforced.mem = false;
   if (spec.pids) r.limits_enforced.pids = false;
-  if (spec.max_output_bytes) r.limits_enforced.output = false;
+  if (spec.max_output_bytes) r.limits_enforced.output = true;
 
   auto finish = [&r, start](ExitReason reason) {
     r.exit_reason = reason;
@@ -100,7 +100,7 @@ RunResult run(const RunSpec& spec) {
     return finish(ExitReason::SetupFailed);
   }
 
-  OutputRouter out(spec.output_mode, r);
+  OutputRouter out(spec.output_mode, spec.max_output_bytes, r);
   ExitReason trigger;
   bool status_captured;
   if (child.exec_errno) {
@@ -112,7 +112,8 @@ RunResult run(const RunSpec& spec) {
     std::optional<TimePoint> deadline;
     if (spec.wall) deadline = deadline_after(start, *spec.wall);
     trigger = supervise(child, out, r, deadline, spec.cancel_fd);
-    status_captured = trigger != ExitReason::Timeout && trigger != ExitReason::Cancelled;
+    status_captured = trigger != ExitReason::Timeout && trigger != ExitReason::Cancelled &&
+                      trigger != ExitReason::OutputLimit;
   }
   r.termination.trigger_ms = ms_since(start);
 

@@ -11,6 +11,7 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 add_compile_options(-Wall -Wextra -Wpedantic -Werror)
 
 add_library(corralcore STATIC
+  src/audit.cpp
   src/cli.cpp
   src/procscan.cpp
   src/runner.cpp
@@ -28,7 +29,7 @@ add_executable(unit_tests tests/unit/unit_tests.cpp)
 target_link_libraries(unit_tests PRIVATE corralcore)
 
 # Misbehaving commands for the tests, built into build/faults/.
-set(FAULT_PROGRAMS sleeper term_ignorer daemonizer daemonizer_stay pipe_holder)
+set(FAULT_PROGRAMS sleeper term_ignorer daemonizer daemonizer_stay pipe_holder streamer)
 foreach(name IN LISTS FAULT_PROGRAMS)
   add_executable(corral_${name} faults/corral_${name}.c)
   set_target_properties(corral_${name} PROPERTIES
@@ -64,3 +65,11 @@ add_test(NAME cli_nonexistent_exits_127
   COMMAND sh -c "\"$0\" -- /nonexistent 2>/dev/null; [ $? -eq 127 ]" ${CORRAL_BIN})
 add_test(NAME cli_usage_error_exits_125
   COMMAND sh -c "\"$0\" --wall 5x -- true 2>/dev/null; [ $? -eq 125 ]" ${CORRAL_BIN})
+
+# The audit record goes through /dev/fd/3 into a pipe.
+add_test(NAME cli_json_parses
+  COMMAND sh -c "\"$0\" --quiet --json /dev/fd/3 -- true 3>&1 >/dev/null | \"$1\" -m json.tool >/dev/null"
+          ${CORRAL_BIN} ${Python3_EXECUTABLE})
+add_test(NAME cli_summary_line
+  COMMAND sh -c "\"$0\" -- true 2>&1 >/dev/null | grep -Eqx 'corral: exited code=0 in [0-9]+[.][0-9]{3}s mode=fallback leftovers_killed=0'"
+          ${CORRAL_BIN})
