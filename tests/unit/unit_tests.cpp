@@ -13,6 +13,7 @@
 #include <utility>
 #include <vector>
 
+#include "audit.hpp"
 #include "cli.hpp"
 #include "procscan.hpp"
 #include "runner.hpp"
@@ -148,6 +149,80 @@ void test_parse_proc_stat() {
   CHECK(!parse_proc_stat("12 bash S 1 2 3"));
   CHECK(!parse_proc_stat("12 (bash) S 1 2"));
   CHECK(!parse_proc_stat("12 (bash) S 1 x 3"));
+}
+
+void test_json_quote() {
+  using corral::json_quote;
+  CHECK(json_quote("") == "\"\"");
+  CHECK(json_quote("plain") == "\"plain\"");
+  CHECK(json_quote("a\"b") == "\"a\\\"b\"");
+  CHECK(json_quote("a\\b") == "\"a\\\\b\"");
+  CHECK(json_quote("a\nb\tc\rd\be\ff") == "\"a\\nb\\tc\\rd\\be\\ff\"");
+  CHECK(json_quote("\x01") == "\"\\u0001\"");
+  CHECK(json_quote("\x1f") == "\"\\u001f\"");
+  CHECK(json_quote(std::string("a\0b", 3)) == "\"a\\u0000b\"");
+  CHECK(json_quote("\x7f") == "\"\x7f\"");
+  CHECK(json_quote("caf\xc3\xa9 \xe2\x9c\x93") == "\"caf\xc3\xa9 \xe2\x9c\x93\"");  // UTF-8
+  CHECK(json_quote("\xff") == "\"\xff\"");  // not UTF-8, still passes through
+}
+
+bool contains(const std::string& haystack, const std::string& needle) {
+  return haystack.find(needle) != std::string::npos;
+}
+
+void test_audit_json() {
+  corral::RunResult r;
+  r.corral_version = "0.1.0";
+  r.argv = {"sh", "-c", "echo \"hi\""};
+  r.mode_reason = "forced_by_flag";
+  r.limits.wall_ms = 2000;
+  r.limits.grace_ms = 1000;
+  r.limits.verify_timeout_ms = 2000;
+  r.limits_enforced.wall = true;
+  r.exit_reason = ExitReason::Timeout;
+  r.term_signal = SIGTERM;
+  r.corral_exit_code = 124;
+  r.termination.term_sent_ms = 2001;
+  r.survivors = {41, 42};
+  r.kernel = "6.8.0";
+  const std::string json = corral::audit_json(r);
+
+  CHECK(json.rfind("{\"schema_version\": 1, \"corral_version\": \"0.1.0\", ", 0) == 0);
+  CHECK(json.size() >= 2 && json.substr(json.size() - 2) == "}\n");
+  CHECK(json.find('\n') == json.size() - 1);  // one line
+  CHECK(contains(json, "\"argv\": [\"sh\", \"-c\", \"echo \\\"hi\\\"\"]"));
+  CHECK(contains(json, "\"mode\": \"fallback\", \"mode_reason\": \"forced_by_flag\""));
+  CHECK(contains(json, "\"limits\": {\"wall_ms\": 2000, \"grace_ms\": 1000, "
+                       "\"verify_timeout_ms\": 2000, \"mem_bytes\": null, \"pids\": null, "
+                       "\"output_bytes\": null}"));
+  CHECK(contains(json, "\"limits_enforced\": {\"wall\": true, \"mem\": null, \"pids\": null, "
+                       "\"output\": null}"));
+  CHECK(contains(json, "\"exit_reason\": \"timeout\", \"exit_code\": null, \"term_signal\": 15, "
+                       "\"cancel_signal\": null, \"spawn_errno\": null, \"corral_exit_code\": 124"));
+  CHECK(contains(json, "\"truncated\": false"));
+  CHECK(contains(json, "\"term_sent_ms\": 2001, \"kill_sent_ms\": null"));
+  CHECK(contains(json, "\"survivors\": [41, 42]"));
+  CHECK(contains(json, "\"limit_events\": {\"oom_kills\": null, \"pids_max_hits\": null, "
+                       "\"peak_mem_bytes\": null}, \"cgroup_path\": null, \"kernel\": \"6.8.0\"}"));
+
+  r.survivors.clear();
+  CHECK(contains(corral::audit_json(r), "\"survivors\": []"));
+}
+
+void test_summary_line() {
+  corral::RunResult r;
+  r.exit_reason = ExitReason::Timeout;
+  r.corral_exit_code = 124;
+  r.duration_ms = 3014;
+  r.termination.leftovers_at_trigger = 1;
+  CHECK(corral::summary_line(r) ==
+        "corral: timeout code=124 in 3.014s mode=fallback leftovers_killed=1\n");
+  r.exit_reason = ExitReason::Exited;
+  r.corral_exit_code = 0;
+  r.duration_ms = 5;
+  r.termination.leftovers_at_trigger = 0;
+  CHECK(corral::summary_line(r) ==
+        "corral: exited code=0 in 0.005s mode=fallback leftovers_killed=0\n");
 }
 
 corral::RunResult result_with(ExitReason reason) {
@@ -291,6 +366,46 @@ void test_leftovers_are_killed() {
   CHECK(r.error.empty());
 }
 
+void test_output_cap() {
+  // The cap is on stdout plus stderr together, cut at the exact byte.
+  corral::RunSpec spec = capture_spec({"sh", "-c", "printf ab; printf cd >&2; sleep 30"});
+  spec.max_output_bytes = 3;
+  corral::RunResult r = corral::run(spec);
+  CHECK(r.exit_reason == ExitReason::OutputLimit);
+  CHECK(r.corral_exit_code == 122);
+  CHECK(r.stdout_data == "ab");
+  CHECK(r.stderr_data == "c");
+  CHECK(r.output.stdout_bytes == 2);
+  CHECK(r.output.stderr_bytes == 1);
+  CHECK(r.output.truncated);
+  CHECK(r.limits_enforced.output == true);
+  CHECK(r.limits.output_bytes == 3u);
+  CHECK(r.term_signal == SIGTERM);  // status captured after the cap trigger
+  CHECK(r.duration_ms < 2000);
+  CHECK(r.error.empty());
+
+  // Output that fits the cap exactly is not truncated.
+  spec = capture_spec({"sh", "-c", "printf abc"});
+  spec.max_output_bytes = 3;
+  r = corral::run(spec);
+  CHECK(r.exit_reason == ExitReason::Exited);
+  CHECK(r.corral_exit_code == 0);
+  CHECK(r.stdout_data == "abc");
+  CHECK(!r.output.truncated);
+
+  // The main child overran the cap and then exited: the cap came first.
+  spec = capture_spec({"sh", "-c", "printf abcdef"});
+  spec.max_output_bytes = 3;
+  r = corral::run(spec);
+  CHECK(r.exit_reason == ExitReason::OutputLimit);
+  CHECK(r.stdout_data == "abc");
+  CHECK(r.error.empty());
+
+  // No cap requested: nothing reported as enforced.
+  r = corral::run(capture_spec({"true"}));
+  CHECK(!r.limits_enforced.output.has_value());
+}
+
 void test_spawn_failure() {
   corral::RunResult r = corral::run(capture_spec({"/nonexistent"}));
   CHECK(r.exit_reason == ExitReason::SpawnFailed);
@@ -315,12 +430,16 @@ int main() {
   test_parse_count();
   test_parse_args();
   test_parse_proc_stat();
+  test_json_quote();
+  test_audit_json();
+  test_summary_line();
   test_exit_code_for();
   test_descriptor_hygiene();
   test_transparency();
   test_capture_and_stdin();
   test_timeout();
   test_leftovers_are_killed();
+  test_output_cap();
   test_spawn_failure();
   std::printf("%d checks, %d failed\n", g_checks, g_failures);
   return g_failures == 0 ? 0 : 1;
