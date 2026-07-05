@@ -29,7 +29,8 @@ add_executable(unit_tests tests/unit/unit_tests.cpp)
 target_link_libraries(unit_tests PRIVATE corralcore)
 
 # Misbehaving commands for the tests, built into build/faults/.
-set(FAULT_PROGRAMS sleeper term_ignorer daemonizer daemonizer_stay pipe_holder streamer)
+set(FAULT_PROGRAMS sleeper streamer stdin_waiter daemonizer daemonizer_stay term_ignorer
+    forker pipe_holder mem_hog graceful)
 foreach(name IN LISTS FAULT_PROGRAMS)
   add_executable(corral_${name} faults/corral_${name}.c)
   set_target_properties(corral_${name} PROPERTIES
