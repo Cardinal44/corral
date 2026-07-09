@@ -92,7 +92,7 @@ Spawned spawn_child(const std::vector<std::string>& argv, StdinPolicy stdin_poli
   for (const std::string& a : argv) cargv.push_back(const_cast<char*>(a.c_str()));
   cargv.push_back(nullptr);
 
-  // Prepared before fork so the child makes only the calls listed in 7.3.
+  // Prepared before fork: the child may only make async-signal-safe calls.
   sigset_t empty_mask;
   sigemptyset(&empty_mask);
   struct sigaction dfl;
@@ -112,8 +112,6 @@ Spawned spawn_child(const std::vector<std::string>& argv, StdinPolicy stdin_poli
   if (pid < 0) return fail("fork");
 
   if (pid == 0) {
-    // Only: setsid prctl getppid sigprocmask sigaction dup2 close close_range
-    // read write execvp _exit.
     if (setsid() < 0) child_fail(execerr_fd, 125);
     if (prctl(PR_SET_PDEATHSIG, SIGKILL) < 0) child_fail(execerr_fd, 125);
     if (getppid() != parent_pid) _exit(125);  // parent already died

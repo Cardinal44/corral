@@ -22,7 +22,7 @@ int fail(const char* what) {
   return 125;
 }
 
-// Writes all of `data`, then closes `fd`. Returns false with errno set.
+// Returns false with errno set.
 bool write_and_close(corral::unique_fd fd, const std::string& data) {
   size_t done = 0;
   while (done < data.size()) {

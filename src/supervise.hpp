@@ -39,7 +39,7 @@ class OutputRouter {
 // unreaped). Returns Exited or Signaled, or SetupFailed if waitid failed.
 ExitReason capture_status(const Spawned& child, RunResult& result);
 
-// Returns the trigger that ends the running phase.
+// Returns the first trigger: exit, deadline, output cap, or cancellation.
 ExitReason supervise(Spawned& child, OutputRouter& out, RunResult& result,
                      std::optional<TimePoint> deadline, int cancel_fd);
 

@@ -146,7 +146,7 @@ ExitReason supervise(Spawned& child, OutputRouter& out, RunResult& result,
     if (fds[2].revents != 0) out.pump(Stream::Stderr, child.err_r);
     if (out.cap_reached()) return ExitReason::OutputLimit;
     // Ends on main child exit without waiting for pipe EOF: a descendant may
-    // hold the write ends open indefinitely (F8).
+    // hold the write ends open indefinitely.
     if (fds[0].revents != 0) return capture_status(child, result);
     if (fds[3].revents != 0) {
       result.cancelled = true;

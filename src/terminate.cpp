@@ -57,8 +57,8 @@ void terminate_and_verify(Spawned& child, OutputRouter& out, RunResult& result,
   result.termination.leftovers_at_trigger = static_cast<uint64_t>(
       std::count_if(live.begin(), live.end(), [&](pid_t pid) { return pid != child.pid; }));
 
-  // Phase A, graceful. The main child is unreaped, so its process group id
-  // cannot have been recycled and kill(-pid) reaches only its group.
+  // The main child is unreaped, so its process group id cannot have been
+  // recycled and kill(-pid) reaches only its group.
   if (!live.empty() && grace.count() > 0) {
     kill(-child.pid, SIGTERM);  // ESRCH: the group is already empty
     signal_all(live, SIGTERM, target);
@@ -70,16 +70,14 @@ void terminate_and_verify(Spawned& child, OutputRouter& out, RunResult& result,
     }
   }
 
-  // Phase B, forceful.
   if (!live.empty()) {
     kill(-child.pid, SIGKILL);
     signal_all(live, SIGKILL, target);
     result.termination.kill_sent_ms = ms_since(start);
   }
 
-  // Phase C, drain and verify. The subreaper makes every orphan corral's
-  // child, so repeated passes also catch descendants that left the group or
-  // session once their ancestors died.
+  // The subreaper makes every orphan corral's child, so repeated passes also
+  // catch descendants that left the group or session once their ancestors died.
   const TimePoint verify_end = deadline_after(now(), verify_timeout);
   for (;;) {
     live = fallback_live_set(target);

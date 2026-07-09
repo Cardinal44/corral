@@ -99,6 +99,6 @@ struct RunResult {
 };
 
 RunResult run(const RunSpec& spec);
-int exit_code_for(const RunResult& r);   // implements 5.1
+int exit_code_for(const RunResult& r);
 
 }  // namespace corral

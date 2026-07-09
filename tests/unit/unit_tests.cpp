@@ -334,7 +334,7 @@ void test_capture_and_stdin() {
   CHECK(r.output.stdout_bytes == 4);
   CHECK(r.output.stderr_bytes == 4);
 
-  r =corral::run(capture_spec({"cat"}));
+  r = corral::run(capture_spec({"cat"}));
   CHECK(r.exit_reason == ExitReason::Exited);
   CHECK(r.exit_code == 0);
   CHECK(r.stdout_data.empty());

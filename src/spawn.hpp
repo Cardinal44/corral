@@ -20,8 +20,7 @@ struct Spawned {
   std::optional<int> exec_errno;
 };
 
-// Forks, isolates, and execs argv. On return with ok == true the
-// child is unreaped and either running the command or already exited after a
+// On return with ok == true the child is unreaped and either running the command or already exited after a
 // failed exec (exec_errno set).
 Spawned spawn_child(const std::vector<std::string>& argv, StdinPolicy stdin_policy);
 
