@@ -63,7 +63,8 @@ void reap_now(pid_t pid) {
 
 }  // namespace
 
-Spawned spawn_child(const std::vector<std::string>& argv, StdinPolicy stdin_policy) {
+Spawned spawn_child(const std::vector<std::string>& argv, StdinPolicy stdin_policy,
+                    int box_procs_fd) {
   Spawned s;
   auto fail = [&s](const char* what) {
     s.error = sys_error(what, errno);
@@ -133,22 +134,40 @@ Spawned spawn_child(const std::vector<std::string>& argv, StdinPolicy stdin_poli
     child_fail(execerr_fd, errno == ENOENT ? 127 : 126);
   }
 
-  s.pid = pid;
-  s.pidfd.reset(pidfd_open(pid, 0));
-  if (!s.pidfd) {
-    s.error = sys_error("pidfd_open", errno);
-    // The child is still blocked on `go` and unreaped, so this pid is ours.
+  // The child is blocked on `go` and unreaped until the write below, so this
+  // pid is ours to kill if setup fails.
+  auto abort_child = [&s, pid](std::string error) {
+    s.error = std::move(error);
     kill(pid, SIGKILL);
     reap_now(pid);
+    s.pidfd.reset();
     s.pid = -1;
-    return s;
-  }
+    return std::move(s);
+  };
+
+  s.pid = pid;
+  s.pidfd.reset(pidfd_open(pid, 0));
+  if (!s.pidfd) return abort_child(sys_error("pidfd_open", errno));
 
   out_w.reset();
   err_w.reset();
   go_r.reset();
   execerr_w.reset();
   stdin_src.reset();
+
+  // Before `go`: the child cannot have forked yet, so every descendant is born
+  // inside the box.
+  if (box_procs_fd >= 0) {
+    const std::string pid_text = std::to_string(pid);
+    ssize_t n;
+    do {
+      n = write(box_procs_fd, pid_text.data(), pid_text.size());
+    } while (n < 0 && errno == EINTR);
+    if (n != static_cast<ssize_t>(pid_text.size())) {
+      s.box_attach_failed = true;
+      return abort_child(sys_error("write cgroup.procs", n < 0 ? errno : EIO));
+    }
+  }
 
   // EPIPE means the child already exited; execerr and the pidfd still say why.
   ssize_t w;

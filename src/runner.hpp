@@ -96,6 +96,8 @@ struct RunResult {
   std::string stdout_data, stderr_data;  // filled only in OutputMode::Capture
   bool cancelled = false;
   std::string error;  // for setup_failed and spawn_failed; run() never prints
+  std::vector<std::string> warnings;  // for example a requested limit that was not applied
+  bool teardown_failed = false;       // the box could not be removed; exit 120
 };
 
 RunResult run(const RunSpec& spec);

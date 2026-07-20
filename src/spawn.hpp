@@ -18,10 +18,13 @@ struct Spawned {
   unique_fd pidfd;
   unique_fd out_r, err_r;  // non-blocking
   std::optional<int> exec_errno;
+  bool box_attach_failed = false;  // the child was killed before it could exec
 };
 
-// On return with ok == true the child is unreaped and either running the command or already exited after a
-// failed exec (exec_errno set).
-Spawned spawn_child(const std::vector<std::string>& argv, StdinPolicy stdin_policy);
+// On return with ok == true the child is unreaped and either running the
+// command or already exited after a failed exec (exec_errno set). If
+// `box_procs_fd` is valid, the child joins that cgroup before it can fork.
+Spawned spawn_child(const std::vector<std::string>& argv, StdinPolicy stdin_policy,
+                    int box_procs_fd);
 
 }  // namespace corral

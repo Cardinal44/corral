@@ -12,8 +12,58 @@ import time
 import uuid
 
 
+CGROUP_ROOT = "/sys/fs/cgroup"
+_runs_dir = None
+
+
 def new_tag():
     return "corraltag-" + uuid.uuid4().hex
+
+
+def own_cgroup():
+    """This process's cgroup v2 directory, or None without cgroup v2."""
+    with open("/proc/self/cgroup") as f:
+        for line in f:
+            if line.startswith("0::"):
+                return CGROUP_ROOT + line[3:].strip().rstrip("/")
+    return None
+
+
+def enable_controllers(cgroup, controllers):
+    for c in controllers:
+        with open(os.path.join(cgroup, "cgroup.subtree_control"), "w") as f:
+            f.write("+" + c)
+
+
+def enforced_parent():
+    """Prepares this process's delegated cgroup G for enforced runs.
+
+    A cgroup that holds processes cannot enable controllers for its children,
+    so this process moves into G/harness-leaf first. Returns G/runs, the parent
+    for corral's boxes, or None if G is not delegated to this user.
+    """
+    global _runs_dir
+    if _runs_dir is not None:
+        return _runs_dir
+    g = own_cgroup()
+    if g is None or not os.access(g, os.W_OK):
+        return None
+    try:
+        leaf = os.path.join(g, "harness-leaf")
+        runs = os.path.join(g, "runs")
+        os.makedirs(leaf, exist_ok=True)
+        with open(os.path.join(leaf, "cgroup.procs"), "w") as f:
+            f.write(str(os.getpid()))
+        with open(os.path.join(g, "cgroup.controllers")) as f:
+            available = f.read().split()
+        wanted = [c for c in ("memory", "pids") if c in available]
+        enable_controllers(g, wanted)
+        os.makedirs(runs, exist_ok=True)
+        enable_controllers(runs, wanted)
+    except OSError:
+        return None
+    _runs_dir = runs
+    return runs
 
 
 def tagged_pids(tag):

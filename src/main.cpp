@@ -93,6 +93,9 @@ int main(int argc, char** argv) {
       result.corral_exit_code = corral::exit_code_for(result);
     }
   }
+  for (const std::string& warning : result.warnings) {
+    std::fprintf(stderr, "corral: warning: %s\n", warning.c_str());
+  }
   if (!result.error.empty()) std::fprintf(stderr, "corral: %s\n", result.error.c_str());
   if (json_fd && !write_and_close(std::move(json_fd), corral::audit_json(result))) {
     std::fprintf(stderr, "corral: write --json path '%s': %s\n", opts.json_path->c_str(),

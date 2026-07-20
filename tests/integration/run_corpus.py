@@ -1,7 +1,9 @@
 """Integration tests against the real corral binary.
 
-Every scenario runs with a fresh TAG and `--json`, and must leave zero
-surviving processes. CORRAL_RACE=1 repeats every scenario 20 times.
+Every scenario runs in both modes with a fresh TAG and `--json`, and must leave
+zero surviving processes. Enforced mode needs a delegated cgroup, so run the
+suite through scripts/run-integration.sh. CORRAL_RACE=1 repeats every scenario
+20 times.
 """
 
 import json
@@ -40,15 +42,40 @@ NESTED_FIELDS = {
 def run_corral(args, tag, **kwargs):
     with tempfile.TemporaryDirectory() as tmp:
         json_path = os.path.join(tmp, "record.json")
-        run = harness.run([CORRAL, "--cgroup-mode=fallback", "--quiet", "--json", json_path,
-                           *args], tag, **kwargs)
+        run = harness.run([CORRAL, "--quiet", "--json", json_path, *args], tag, **kwargs)
         if os.path.exists(json_path):
             with open(json_path, "rb") as f:
                 run.record = f.read()
     return run
 
 
-class FallbackCorpus(unittest.TestCase):
+def parse_record(test, run, argv):
+    """Checks the record's shape and the fields every run shares."""
+    raw = run.record
+    test.assertIsNotNone(raw, "no record written")
+    test.assertTrue(raw.endswith(b"}\n"), raw)
+    test.assertEqual(raw.count(b"\n"), 1, "the record is one line")
+    record = json.loads(raw)
+    test.assertEqual(list(record), RECORD_FIELDS)
+    for name, fields in NESTED_FIELDS.items():
+        test.assertEqual(list(record[name]), fields, name)
+    test.assertEqual(record["schema_version"], 1)
+    test.assertEqual(record["argv"], argv)
+    test.assertEqual(record["corral_exit_code"], run.code)
+    test.assertEqual(record["kernel"], os.uname().release)
+    return record
+
+
+class Corpus:
+    """The scenarios. Subclasses set MODE and mode_options."""
+
+    MODE = None
+    mode_options = []
+
+    @property
+    def enforced(self):
+        return self.MODE == "enforced"
+
     def scenario(self, program, *program_args, check, options=STANDARD, stderr=b"",
                  **kwargs):
         """Runs `program` under corral REPEAT times and calls check(run) on each."""
@@ -57,7 +84,8 @@ class FallbackCorpus(unittest.TestCase):
                 tag = harness.new_tag()
                 argv = [os.path.join(FAULTS, program), tag, *program_args]
                 try:
-                    run = run_corral([*options, "--", *argv], tag, **kwargs)
+                    run = run_corral([*self.mode_options, *options, "--", *argv], tag,
+                                     **kwargs)
                 finally:
                     leaked = harness.kill_tagged(tag)
                 self.assertFalse(run.hung, "corral did not return")
@@ -70,25 +98,23 @@ class FallbackCorpus(unittest.TestCase):
                 check(run)
 
     def check_record(self, run, argv):
-        raw = run.record
-        self.assertIsNotNone(raw, "no record written")
-        self.assertTrue(raw.endswith(b"}\n"), raw)
-        self.assertEqual(raw.count(b"\n"), 1, "the record is one line")
-        record = json.loads(raw)
-        self.assertEqual(list(record), RECORD_FIELDS)
-        for name, fields in NESTED_FIELDS.items():
-            self.assertEqual(list(record[name]), fields, name)
-        self.assertEqual(record["schema_version"], 1)
-        self.assertEqual(record["argv"], argv)
-        self.assertEqual(record["mode"], "fallback")
-        self.assertEqual(record["mode_reason"], "forced_by_flag")
-        self.assertEqual(record["corral_exit_code"], run.code)
+        record = parse_record(self, run, argv)
+        self.assertEqual(record["mode"], self.MODE)
         self.assertEqual(record["orphans_remaining"], 0)
         self.assertEqual(record["survivors"], [])
-        self.assertEqual(record["limit_events"],
-                         {"oom_kills": None, "pids_max_hits": None, "peak_mem_bytes": None})
-        self.assertIsNone(record["cgroup_path"])
-        self.assertEqual(record["kernel"], os.uname().release)
+        events = record["limit_events"]
+        if self.enforced:
+            self.assertIsNone(record["mode_reason"])
+            box = record["cgroup_path"]
+            self.assertTrue(box.startswith(self.runs + "/corral-run-"), box)
+            self.assertFalse(os.path.exists(box), "the box was not removed")
+            self.assertIsInstance(events["oom_kills"], int)
+            self.assertIsInstance(events["pids_max_hits"], int)
+        else:
+            self.assertEqual(record["mode_reason"], "forced_by_flag")
+            self.assertIsNone(record["cgroup_path"])
+            self.assertEqual(events,
+                             {"oom_kills": None, "pids_max_hits": None, "peak_mem_bytes": None})
         limits = record["limits"]
         if limits["wall_ms"] is not None:
             # corral must return within wall + grace + verify_timeout + 500 ms.
@@ -145,7 +171,11 @@ class FallbackCorpus(unittest.TestCase):
         def check(run):
             self.assertEqual(run.code, 124)
             self.assertGreater(run.record["termination"]["leftovers_at_trigger"], 0)
-        self.scenario("corral_forker", check=check)
+            if self.enforced:
+                self.assertIs(run.record["limits_enforced"]["pids"], True)
+                self.assertGreater(run.record["limit_events"]["pids_max_hits"], 0)
+        options = STANDARD + (["--pids", "32"] if self.enforced else [])
+        self.scenario("corral_forker", options=options, check=check)
 
     def test_f8_pipe_holder(self):
         def check(run):
@@ -157,9 +187,16 @@ class FallbackCorpus(unittest.TestCase):
 
     def test_f9_mem_hog(self):
         def check(run):
-            self.assertEqual(run.code, 124)
-            self.assertIsNone(run.record["limits_enforced"]["mem"])
-        self.scenario("corral_mem_hog", "256", check=check)
+            if self.enforced:
+                self.assertEqual(run.code, 121)
+                self.assertEqual(run.record["exit_reason"], "memory_limit")
+                self.assertIs(run.record["limits_enforced"]["mem"], True)
+                self.assertGreater(run.record["limit_events"]["oom_kills"], 0)
+            else:
+                self.assertEqual(run.code, 124)
+                self.assertIsNone(run.record["limits_enforced"]["mem"])
+        options = STANDARD + (["--mem", "64M"] if self.enforced else [])
+        self.scenario("corral_mem_hog", "256", options=options, check=check)
 
     def test_f10_graceful(self):
         def check(run):
@@ -194,14 +231,14 @@ class FallbackCorpus(unittest.TestCase):
             self.assertEqual(run.record["limits_enforced"]["output"], True)
         self.scenario("corral_streamer", options=["--max-output", "1000"], check=check)
 
-    def test_mem_and_pids_not_enforced_in_fallback(self):
-        # A limit requested but not applied must be reported as false.
+    def test_mem_and_pids_reporting(self):
+        # Applied only with a box; never reported as enforced without one.
         def check(run):
             self.assertEqual(run.code, 0)
             self.assertEqual(run.record["limits"]["mem_bytes"], 64 << 20)
             self.assertEqual(run.record["limits"]["pids"], 32)
-            self.assertIs(run.record["limits_enforced"]["mem"], False)
-            self.assertIs(run.record["limits_enforced"]["pids"], False)
+            self.assertIs(run.record["limits_enforced"]["mem"], self.enforced)
+            self.assertIs(run.record["limits_enforced"]["pids"], self.enforced)
         self.scenario("corral_sleeper", "0", options=["--mem", "64M", "--pids", "32"],
                       check=check)
 
@@ -229,6 +266,59 @@ class FallbackCorpus(unittest.TestCase):
             self.assertEqual(run.record["cancel_signal"], signal.SIGTERM)
         self.scenario("corral_daemonizer_stay", options=["--grace", "1s"], signal_after=0.5,
                       sig=signal.SIGTERM, check=check)
+
+
+class FallbackCorpus(Corpus, unittest.TestCase):
+    MODE = "fallback"
+    mode_options = ["--cgroup-mode=fallback"]
+
+
+class EnforcedCorpus(Corpus, unittest.TestCase):
+    MODE = "enforced"
+
+    @classmethod
+    def setUpClass(cls):
+        cls.runs = harness.enforced_parent()
+        if cls.runs is None:
+            raise unittest.SkipTest(
+                "no delegated cgroup; run the suite through scripts/run-integration.sh")
+        cls.mode_options = ["--cgroup-mode=enforced", "--cgroup-parent", cls.runs]
+
+
+class OutsideScope(unittest.TestCase):
+    """Checks that need a cgroup that is not delegated to this user."""
+
+    @classmethod
+    def setUpClass(cls):
+        g = harness.own_cgroup()
+        if g is None or os.access(g, os.W_OK):
+            raise unittest.SkipTest("this process's cgroup is delegated")
+
+    def run_sleeper(self, *options):
+        tag = harness.new_tag()
+        argv = [os.path.join(FAULTS, "corral_sleeper"), tag, "0"]
+        try:
+            run = run_corral([*options, "--", *argv], tag)
+        finally:
+            leaked = harness.kill_tagged(tag)
+        self.assertEqual(run.survivors, [])
+        self.assertEqual(leaked, [])
+        return run, parse_record(self, run, argv)
+
+    def test_enforced_exits_125(self):
+        run, record = self.run_sleeper("--cgroup-mode=enforced")
+        self.assertEqual(run.code, 125)
+        self.assertEqual(record["exit_reason"], "setup_failed")
+        self.assertEqual(record["mode_reason"], "cgroup_not_delegated")
+        self.assertIn(b"enforced mode unavailable (cgroup_not_delegated): access ", run.stderr)
+
+    def test_auto_falls_back(self):
+        run, record = self.run_sleeper("--mem", "64M")
+        self.assertEqual(run.code, 0)
+        self.assertEqual(record["mode"], "fallback")
+        self.assertEqual(record["mode_reason"], "cgroup_not_delegated")
+        self.assertIs(record["limits_enforced"]["mem"], False)
+        self.assertIn(b"warning: cgroup_not_delegated", run.stderr)
 
 
 if __name__ == "__main__":

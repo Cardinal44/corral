@@ -14,6 +14,7 @@
 #include <vector>
 
 #include "audit.hpp"
+#include "cgroup.hpp"
 #include "cli.hpp"
 #include "procscan.hpp"
 #include "runner.hpp"
@@ -151,6 +152,30 @@ void test_parse_proc_stat() {
   CHECK(!parse_proc_stat("12 (bash) S 1 x 3"));
 }
 
+void test_parse_proc_cgroup() {
+  using corral::parse_proc_cgroup;
+  CHECK(parse_proc_cgroup("0::/user.slice/run-1.scope\n") ==
+        std::string("/user.slice/run-1.scope"));
+  CHECK(parse_proc_cgroup("0::/\n") == std::string("/"));
+  // A hybrid hierarchy lists v1 controllers first.
+  CHECK(parse_proc_cgroup("12:pids:/x\n1:name=systemd:/y\n0::/z") == std::string("/z"));
+  CHECK(!parse_proc_cgroup("12:pids:/x\n"));
+  CHECK(!parse_proc_cgroup(""));
+}
+
+void test_parse_keyed_value() {
+  using corral::parse_keyed_value;
+  CHECK(parse_keyed_value("populated 1\nfrozen 0\n", "populated") == 1u);
+  CHECK(parse_keyed_value("populated 0\nfrozen 0\n", "populated") == 0u);
+  const char* memory_events = "low 0\nhigh 0\nmax 12\noom 1\noom_kill 3\noom_group_kill 1\n";
+  CHECK(parse_keyed_value(memory_events, "oom_kill") == 3u);
+  CHECK(parse_keyed_value(memory_events, "max") == 12u);
+  CHECK(parse_keyed_value("max 0\nmax.imposed 4\n", "max") == 0u);  // exact key only
+  CHECK(!parse_keyed_value(memory_events, "oom_ki"));
+  CHECK(!parse_keyed_value("populated x\n", "populated"));
+  CHECK(!parse_keyed_value("", "populated"));
+}
+
 void test_json_quote() {
   using corral::json_quote;
   CHECK(json_quote("") == "\"\"");
@@ -270,6 +295,9 @@ void test_exit_code_for() {
     r = result_with(reason);
     r.exit_code = 0;
     r.survivors = {12345};
+    CHECK(exit_code_for(r) == 120);
+    r.survivors.clear();
+    r.teardown_failed = true;  // the box could not be removed
     CHECK(exit_code_for(r) == 120);
   }
 }
@@ -430,6 +458,8 @@ int main() {
   test_parse_count();
   test_parse_args();
   test_parse_proc_stat();
+  test_parse_proc_cgroup();
+  test_parse_keyed_value();
   test_json_quote();
   test_audit_json();
   test_summary_line();

@@ -10,7 +10,6 @@ extern "C" {  // see spawn.cpp
 
 #include <cerrno>
 #include <charconv>
-#include <cstdio>
 #include <memory>
 
 #include "unique_fd.hpp"
@@ -38,7 +37,28 @@ bool parse_int(std::string_view s, T& out) {
   return ec == std::errc() && ptr == s.data() + s.size();
 }
 
+std::optional<std::string> read_proc_file(pid_t pid, const char* name) {
+  return read_file("/proc/" + std::to_string(pid) + "/" + name);
+}
+
 }  // namespace
+
+std::optional<std::string> read_file(const std::string& path) {
+  unique_fd fd(open(path.c_str(), O_RDONLY | O_CLOEXEC));
+  if (!fd) return std::nullopt;
+  std::string out;
+  char buf[4096];
+  for (;;) {
+    const ssize_t n = read(fd.get(), buf, sizeof buf);
+    if (n > 0) {
+      out.append(buf, static_cast<size_t>(n));
+    } else if (n == 0) {
+      return out;
+    } else if (errno != EINTR) {
+      return std::nullopt;  // ESRCH: the process exited after open
+    }
+  }
+}
 
 std::optional<ProcStat> parse_proc_stat(std::string_view line) {
   const size_t open = line.find('(');
@@ -59,23 +79,26 @@ std::optional<ProcStat> parse_proc_stat(std::string_view line) {
 }
 
 std::optional<ProcStat> read_proc_stat(pid_t pid) {
-  char path[32];
-  std::snprintf(path, sizeof path, "/proc/%d/stat", static_cast<int>(pid));
-  unique_fd fd(open(path, O_RDONLY | O_CLOEXEC));
-  if (!fd) return std::nullopt;
-  char buf[1024];
-  size_t len = 0;
-  while (len < sizeof buf) {
-    ssize_t n = read(fd.get(), buf + len, sizeof buf - len);
-    if (n > 0) {
-      len += static_cast<size_t>(n);
-    } else if (n == 0) {
-      break;
-    } else if (errno != EINTR) {
-      return std::nullopt;  // ESRCH: the process exited after open
-    }
+  auto text = read_proc_file(pid, "stat");
+  if (!text) return std::nullopt;
+  return parse_proc_stat(*text);
+}
+
+std::optional<std::string> parse_proc_cgroup(std::string_view file) {
+  while (!file.empty()) {
+    const size_t end = file.find('\n');
+    const std::string_view line = file.substr(0, end);
+    if (line.substr(0, 3) == "0::") return std::string(line.substr(3));
+    if (end == std::string_view::npos) break;
+    file.remove_prefix(end + 1);
   }
-  return parse_proc_stat(std::string_view(buf, len));
+  return std::nullopt;
+}
+
+std::optional<std::string> read_proc_cgroup(pid_t pid) {
+  auto text = read_proc_file(pid, "cgroup");
+  if (!text) return std::nullopt;
+  return parse_proc_cgroup(*text);
 }
 
 std::vector<pid_t> list_procs() {
@@ -95,21 +118,26 @@ std::vector<pid_t> list_procs() {
 
 bool is_live(const ProcStat& st) { return st.state != 'Z' && st.state != 'X'; }
 
-bool FallbackTarget::matches(pid_t pid, const ProcStat& st) const {
-  return pid != self && is_live(st) &&
-         (st.ppid == self || st.pgrp == child || st.session == child);
+bool RunTarget::in_fallback_set(pid_t pid, const ProcStat& st) const {
+  return pid != self && (st.ppid == self || st.pgrp == child || st.session == child);
 }
 
-std::vector<pid_t> fallback_live_set(const FallbackTarget& target) {
+bool RunTarget::matches(pid_t pid, const ProcStat& st) const {
+  if (!is_live(st)) return false;
+  if (in_fallback_set(pid, st)) return true;
+  return !box.empty() && read_proc_cgroup(pid) == box;
+}
+
+std::vector<pid_t> fallback_live_set(const RunTarget& target) {
   std::vector<pid_t> live;
   for (pid_t pid : list_procs()) {
     auto st = read_proc_stat(pid);
-    if (st && target.matches(pid, *st)) live.push_back(pid);
+    if (st && is_live(*st) && target.in_fallback_set(pid, *st)) live.push_back(pid);
   }
   return live;
 }
 
-void safe_signal(pid_t pid, int sig, const FallbackTarget& target) {
+void safe_signal(pid_t pid, int sig, const RunTarget& target) {
   auto st = read_proc_stat(pid);
   if (!st || !is_live(*st)) return;
   // An unreaped child's pid cannot be recycled, and only corral reaps it.

@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cerrno>
 #include <cstdint>
+#include <string>
 #include <vector>
 
 #include "procscan.hpp"
@@ -21,7 +22,17 @@ int tick(TimePoint deadline, int64_t max_ms) {
   return static_cast<int>(std::min(ms_until(deadline), max_ms));
 }
 
-void signal_all(const std::vector<pid_t>& live, int sig, const FallbackTarget& target) {
+std::vector<pid_t> live_set(const RunTarget& target, const Box* box) {
+  std::vector<pid_t> live = fallback_live_set(target);
+  if (box) {
+    for (pid_t pid : box->live_members()) {
+      if (std::find(live.begin(), live.end(), pid) == live.end()) live.push_back(pid);
+    }
+  }
+  return live;
+}
+
+void signal_all(const std::vector<pid_t>& live, int sig, const RunTarget& target) {
   for (pid_t pid : live) safe_signal(pid, sig, target);
 }
 
@@ -51,9 +62,10 @@ bool reap_all(pid_t main_pid, RunResult& result, bool& status_captured) {
 
 void terminate_and_verify(Spawned& child, OutputRouter& out, RunResult& result,
                           bool& status_captured, std::chrono::milliseconds grace,
-                          std::chrono::milliseconds verify_timeout, TimePoint start) {
-  const FallbackTarget target{getpid(), child.pid};
-  std::vector<pid_t> live = fallback_live_set(target);
+                          std::chrono::milliseconds verify_timeout, TimePoint start,
+                          const Box* box) {
+  const RunTarget target{getpid(), child.pid, box ? box->relative_path() : std::string()};
+  std::vector<pid_t> live = live_set(target, box);
   result.termination.leftovers_at_trigger = static_cast<uint64_t>(
       std::count_if(live.begin(), live.end(), [&](pid_t pid) { return pid != child.pid; }));
 
@@ -66,11 +78,12 @@ void terminate_and_verify(Spawned& child, OutputRouter& out, RunResult& result,
     const TimePoint grace_end = deadline_after(now(), grace);
     while (!live.empty() && now() < grace_end) {
       service(child, out, result, status_captured, tick(grace_end, kGraceTickMs));
-      live = fallback_live_set(target);
+      live = live_set(target, box);
     }
   }
 
   if (!live.empty()) {
+    if (box) box->kill();
     kill(-child.pid, SIGKILL);
     signal_all(live, SIGKILL, target);
     result.termination.kill_sent_ms = ms_since(start);
@@ -80,21 +93,32 @@ void terminate_and_verify(Spawned& child, OutputRouter& out, RunResult& result,
   // catch descendants that left the group or session once their ancestors died.
   const TimePoint verify_end = deadline_after(now(), verify_timeout);
   for (;;) {
-    live = fallback_live_set(target);
+    live = live_set(target, box);
+    if (box && !live.empty()) box->kill();
     signal_all(live, SIGKILL, target);
     // Reaping comes after signaling: signaling a direct child by pid is
     // race-free only while it is unreaped.
     if (!status_captured) service(child, out, result, status_captured, 0);
     const bool echild = reap_all(child.pid, result, status_captured);
-    if (live.empty() && echild) break;
+    if (live.empty() && echild && !(box && box->populated())) break;
     if (now() >= verify_end) {
-      result.survivors = fallback_live_set(target);
+      result.survivors = live_set(target, box);
       break;
     }
     service(child, out, result, status_captured, tick(verify_end, kVerifyTickMs));
   }
   result.orphans_remaining = result.survivors.size();
   result.termination.verified_ms = ms_since(start);
+
+  if (box) {
+    result.limit_events = box->events();
+    std::string error;
+    if (!box->remove(verify_end, error)) {
+      result.teardown_failed = true;
+      if (!result.error.empty()) result.error += "; ";
+      result.error += error;
+    }
+  }
 }
 
 }  // namespace corral

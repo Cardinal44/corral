@@ -1,5 +1,8 @@
 #pragma once
 
+#include <time.h>
+
+#include <cerrno>
 #include <chrono>
 #include <cstdint>
 
@@ -22,6 +25,13 @@ inline TimePoint deadline_after(TimePoint t, std::chrono::milliseconds d) {
   if (d >= std::chrono::duration_cast<std::chrono::milliseconds>(TimePoint::max() - t))
     return TimePoint::max();
   return t + d;
+}
+
+// For short pauses only: `ms` must be below 1000.
+inline void sleep_ms(long ms) {
+  timespec ts{0, ms * 1000000L};
+  while (nanosleep(&ts, &ts) < 0 && errno == EINTR) {
+  }
 }
 
 // Rounded up, so a poll() timeout of this length never wakes before `deadline`.

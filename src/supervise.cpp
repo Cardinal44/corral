@@ -2,7 +2,6 @@
 
 #include <poll.h>
 #include <sys/wait.h>
-#include <time.h>
 #include <unistd.h>
 
 #include <algorithm>
@@ -35,12 +34,6 @@ bool write_all(int fd, const char* data, size_t len) {
     return false;
   }
   return true;
-}
-
-void sleep_ms(long ms) {
-  timespec ts{0, ms * 1000000L};
-  while (nanosleep(&ts, &ts) < 0 && errno == EINTR) {
-  }
 }
 
 int poll_timeout(std::optional<TimePoint> deadline) {

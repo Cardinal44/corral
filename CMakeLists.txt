@@ -12,6 +12,7 @@ add_compile_options(-Wall -Wextra -Wpedantic -Werror)
 
 add_library(corralcore STATIC
   src/audit.cpp
+  src/cgroup.cpp
   src/cli.cpp
   src/procscan.cpp
   src/runner.cpp
@@ -48,9 +49,9 @@ enable_testing()
 add_test(NAME unit_tests COMMAND unit_tests)
 
 add_test(NAME integration
-  COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/integration/run_corpus.py)
+  COMMAND bash ${CMAKE_SOURCE_DIR}/scripts/run-integration.sh)
 set_tests_properties(integration PROPERTIES
-  ENVIRONMENT "CORRAL_BUILD_DIR=${CMAKE_BINARY_DIR}")
+  ENVIRONMENT "CORRAL_BUILD_DIR=${CMAKE_BINARY_DIR};PYTHON=${Python3_EXECUTABLE}")
 
 # Command-line checks against the real binary.
 set(CORRAL_BIN $<TARGET_FILE:corral>)
