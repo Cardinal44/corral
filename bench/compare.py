@@ -6,6 +6,9 @@ GNU `timeout -k 1s 2s` (TO), and bench/naive_runner.py (NV). It counts the
 survivors of every run, writes results.json and results.md, and evaluates the
 claim: corral leaves zero survivors in every scenario, while TO and NV each
 leave a survivor or hang in at least one.
+
+CE needs a delegated cgroup, so run it inside one systemd scope:
+    systemd-run --user --scope -p Delegate=yes --quiet python3 bench/compare.py
 """
 
 import argparse
@@ -42,35 +45,45 @@ NV_KILL_AFTER = 7.0
 KILL_AFTER = 30.0
 
 
-def runner_argv(runner, build, scenario, command):
-    if runner in ("CE", "CF"):
-        extra = [f"--cgroup-mode={'enforced' if runner == 'CE' else 'fallback'}", "--quiet"]
-        if runner == "CE" and scenario == "F7":
+def runner_argv(runner, cfg, scenario, command):
+    if runner == "CE":
+        extra = ["--cgroup-mode=enforced", "--cgroup-parent", cfg.ce_parent]
+        if scenario == "F7":
             extra += ["--pids", "32"]
-        if runner == "CE" and scenario == "F9":
+        if scenario == "F9":
             extra += ["--mem", "64M"]
-        return [os.path.join(build, "corral"), *extra, *STANDARD, "--", *command]
+        return [os.path.join(cfg.build, "corral"), "--quiet", *extra, *STANDARD, "--", *command]
+    if runner == "CF":
+        return [os.path.join(cfg.build, "corral"), "--quiet", "--cgroup-mode=fallback",
+                *STANDARD, "--", *command]
     if runner == "TO":
-        return ["timeout", "-k", "1s", "2s", *command]
+        return [cfg.timeout, "-k", "1s", "2s", *command]
     return [sys.executable, os.path.join(REPO, "bench", "naive_runner.py"), *command]
 
 
-def enforced_available(build):
+def enforced_parent(build):
+    """The box parent for CE, and None or the reason it is not available."""
+    parent = harness.enforced_parent()
+    if parent is None:
+        return None, "no delegated cgroup; run inside systemd-run --user --scope -p Delegate=yes"
     probe = subprocess.run(
-        [os.path.join(build, "corral"), "--cgroup-mode=enforced", "--quiet", "--", "true"],
+        [os.path.join(build, "corral"), "--cgroup-mode=enforced", "--cgroup-parent", parent,
+         "--quiet", "--", "true"],
         stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
-    return probe.returncode == 0, probe.stderr.decode(errors="replace").strip()
+    if probe.returncode != 0:
+        return None, probe.stderr.decode(errors="replace").strip()
+    return parent, None
 
 
-def measure(build, runners, reps):
+def measure(cfg, runners, reps):
     rows = []
     for scenario, program, args in SCENARIOS:
         for runner in runners:
             for rep in range(reps):
                 tag = harness.new_tag()
-                command = [os.path.join(build, "faults", program), tag, *args]
+                command = [os.path.join(cfg.build, "faults", program), tag, *args]
                 try:
-                    r = harness.run(runner_argv(runner, build, scenario, command), tag,
+                    r = harness.run(runner_argv(runner, cfg, scenario, command), tag,
                                     kill_after=NV_KILL_AFTER if runner == "NV" else KILL_AFTER)
                 finally:
                     harness.kill_tagged(tag)
@@ -143,6 +156,8 @@ def write_markdown(path, rows, runners, verdict, info):
         f"Machine: {info['distribution']}, kernel {info['kernel']}, {info['arch']}, "
         f"{info['cpus']} CPUs.",
         "",
+        f"TO is `{info['timeout']}`.",
+        "",
         "Each cell: exit status of the runner (`hung` if it was killed after "
         f"{NV_KILL_AFTER:.0f} s), the worst survivor count over the repetitions, "
         "and the median duration.",
@@ -165,32 +180,39 @@ def main():
         "CORRAL_BUILD_DIR", os.path.join(REPO, "build")))
     parser.add_argument("--reps", type=int, default=5)
     parser.add_argument("--out", default=os.path.join(REPO, "bench", "results"))
-    args = parser.parse_args()
-    if shutil.which("timeout") is None:
-        sys.exit("compare.py: GNU timeout is not installed")
+    parser.add_argument("--timeout", default="timeout",
+                        help="the timeout(1) program for TO (default: timeout on PATH)")
+    cfg = parser.parse_args()
+    timeout_path = shutil.which(cfg.timeout)
+    if timeout_path is None:
+        sys.exit(f"compare.py: {cfg.timeout} not found")
+    # Not every distribution ships GNU coreutils, so the table names the one used.
+    version = subprocess.run([timeout_path, "--version"], capture_output=True, text=True)
+    timeout_version = (version.stdout.splitlines() or ["unknown"])[0]
 
-    ce_ok, ce_reason = enforced_available(args.build)
-    runners = [r for r in RUNNERS if r != "CE" or ce_ok]
+    cfg.ce_parent, ce_reason = enforced_parent(cfg.build)
+    runners = [r for r in RUNNERS if r != "CE" or cfg.ce_parent]
     started = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-    rows = measure(args.build, runners, args.reps)
+    rows = measure(cfg, runners, cfg.reps)
     failures = evaluate(rows, runners)
 
     if failures:
         verdict = "CLAIM FAILS\n" + "\n".join("  " + f for f in failures)
-    elif ce_ok:
+    elif cfg.ce_parent:
         verdict = "CLAIM HOLDS"
     else:
         verdict = f"CLAIM HOLDS for CF, TO, NV (CE not measured: {ce_reason})"
 
     info = machine()
-    os.makedirs(args.out, exist_ok=True)
-    with open(os.path.join(args.out, "results.json"), "w") as f:
-        json.dump({"started_at": started, "machine": info, "reps": args.reps,
-                   "runners": runners, "ce_unavailable": None if ce_ok else ce_reason,
+    info["timeout"] = timeout_version
+    os.makedirs(cfg.out, exist_ok=True)
+    with open(os.path.join(cfg.out, "results.json"), "w") as f:
+        json.dump({"started_at": started, "machine": info, "reps": cfg.reps,
+                   "runners": runners, "ce_unavailable": ce_reason,
                    "runs": rows, "claim_holds": not failures, "failures": failures},
                   f, indent=2)
         f.write("\n")
-    write_markdown(os.path.join(args.out, "results.md"), rows, runners, verdict, info)
+    write_markdown(os.path.join(cfg.out, "results.md"), rows, runners, verdict, info)
     print(verdict)
     return 1 if failures else 0
 
