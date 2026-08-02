@@ -297,7 +297,7 @@ void test_exit_code_for() {
     r.survivors = {12345};
     CHECK(exit_code_for(r) == 120);
     r.survivors.clear();
-    r.teardown_failed = true;  // the box could not be removed
+    r.verify_failed = true;  // for example, /proc could not be read
     CHECK(exit_code_for(r) == 120);
   }
 }

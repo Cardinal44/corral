@@ -27,7 +27,8 @@ class Box {
   // The path as /proc/<pid>/cgroup shows it.
   std::string relative_path() const;
 
-  std::vector<pid_t> live_members() const;
+  // nullopt with errno set if cgroup.procs cannot be read.
+  std::optional<std::vector<pid_t>> live_members() const;
   // True also when cgroup.events cannot be read, so that verification waits.
   bool populated() const;
   // SIGKILLs every process in the box and its descendants, atomically.

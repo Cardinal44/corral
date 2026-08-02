@@ -33,7 +33,8 @@ std::optional<std::string> parse_proc_cgroup(std::string_view file);
 // nullopt if the process no longer exists.
 std::optional<std::string> read_proc_cgroup(pid_t pid);
 
-std::vector<pid_t> list_procs();
+// nullopt with errno set if /proc cannot be listed.
+std::optional<std::vector<pid_t>> list_procs();
 
 // 'X' (dead) is transient and treated like 'Z'.
 bool is_live(const ProcStat& st);
@@ -49,7 +50,16 @@ struct RunTarget {
   bool matches(pid_t pid, const ProcStat& st) const;
 };
 
-std::vector<pid_t> fallback_live_set(const RunTarget& target);
+struct LiveSet {
+  std::vector<pid_t> pids;
+  // Set when a source could not be read. The set is then incomplete, and an
+  // empty `pids` proves nothing.
+  std::string error;
+
+  bool empty() const { return error.empty() && pids.empty(); }
+};
+
+LiveSet fallback_live_set(const RunTarget& target);
 
 // Signals `pid` only if it is still a live member of `target`.
 void safe_signal(pid_t pid, int sig, const RunTarget& target);

@@ -48,9 +48,17 @@ bool lift_above_stdio(unique_fd& fd) {
   return true;
 }
 
-[[noreturn]] void child_fail(int execerr_w, int code) {
-  int err = errno;
-  ssize_t n = write(execerr_w, &err, sizeof err);
+// The child's calls, in order. The child reports the failing one by index,
+// because it may not build a string.
+constexpr const char* kChildSteps[] = {"setsid", "prctl(PR_SET_PDEATHSIG)", "sigprocmask",
+                                       "sigaction", "dup2", "close_range", "execvp"};
+enum ChildStep : int { kSetsid, kPrctl, kSigprocmask, kSigaction, kDup2, kCloseRange, kExecvp };
+
+[[noreturn]] void child_fail(int execerr_w, ChildStep step, int code) {
+  const int report[2] = {step, errno};
+  // Nobody can act on a failed report: the parent then sees EOF, and the exit
+  // status still says the child failed.
+  ssize_t n = write(execerr_w, report, sizeof report);
   (void)n;
   _exit(code);
 }
@@ -113,17 +121,19 @@ Spawned spawn_child(const std::vector<std::string>& argv, StdinPolicy stdin_poli
   if (pid < 0) return fail("fork");
 
   if (pid == 0) {
-    if (setsid() < 0) child_fail(execerr_fd, 125);
-    if (prctl(PR_SET_PDEATHSIG, SIGKILL) < 0) child_fail(execerr_fd, 125);
+    if (setsid() < 0) child_fail(execerr_fd, kSetsid, 125);
+    if (prctl(PR_SET_PDEATHSIG, SIGKILL) < 0) child_fail(execerr_fd, kPrctl, 125);
     if (getppid() != parent_pid) _exit(125);  // parent already died
-    if (sigprocmask(SIG_SETMASK, &empty_mask, nullptr) < 0) child_fail(execerr_fd, 125);
-    for (int sig : kResetSignals) {
-      if (sigaction(sig, &dfl, nullptr) < 0) child_fail(execerr_fd, 125);
+    if (sigprocmask(SIG_SETMASK, &empty_mask, nullptr) < 0) {
+      child_fail(execerr_fd, kSigprocmask, 125);
     }
-    if (stdin_fd >= 0 && dup2(stdin_fd, 0) < 0) child_fail(execerr_fd, 125);
-    if (dup2(out_fd, 1) < 0) child_fail(execerr_fd, 125);
-    if (dup2(err_fd, 2) < 0) child_fail(execerr_fd, 125);
-    if (close_range(3, ~0U, CLOSE_RANGE_CLOEXEC) < 0) child_fail(execerr_fd, 125);
+    for (int sig : kResetSignals) {
+      if (sigaction(sig, &dfl, nullptr) < 0) child_fail(execerr_fd, kSigaction, 125);
+    }
+    if (stdin_fd >= 0 && dup2(stdin_fd, 0) < 0) child_fail(execerr_fd, kDup2, 125);
+    if (dup2(out_fd, 1) < 0) child_fail(execerr_fd, kDup2, 125);
+    if (dup2(err_fd, 2) < 0) child_fail(execerr_fd, kDup2, 125);
+    if (close_range(3, ~0U, CLOSE_RANGE_CLOEXEC) < 0) child_fail(execerr_fd, kCloseRange, 125);
     char byte;
     ssize_t n;
     do {
@@ -131,7 +141,7 @@ Spawned spawn_child(const std::vector<std::string>& argv, StdinPolicy stdin_poli
     } while (n < 0 && errno == EINTR);
     if (n != 1) _exit(125);
     execvp(cargv[0], cargv.data());
-    child_fail(execerr_fd, errno == ENOENT ? 127 : 126);
+    child_fail(execerr_fd, kExecvp, errno == ENOENT ? 127 : 126);
   }
 
   // The child is blocked on `go` and unreaped until the write below, so this
@@ -177,13 +187,17 @@ Spawned spawn_child(const std::vector<std::string>& argv, StdinPolicy stdin_poli
   go_w.reset();
 
   // EOF means execvp succeeded: O_CLOEXEC closed the child's write end. The
-  // errno report is atomic (sizeof(int) <= PIPE_BUF).
-  int child_errno = 0;
+  // report is atomic, because it is smaller than PIPE_BUF.
+  int report[2] = {0, 0};
   ssize_t r;
   do {
-    r = read(execerr_r.get(), &child_errno, sizeof child_errno);
+    r = read(execerr_r.get(), report, sizeof report);
   } while (r < 0 && errno == EINTR);
-  if (r == static_cast<ssize_t>(sizeof child_errno)) s.exec_errno = child_errno;
+  if (r == static_cast<ssize_t>(sizeof report)) {
+    const int steps = static_cast<int>(sizeof kChildSteps / sizeof kChildSteps[0]);
+    s.exec_step = report[0] >= 0 && report[0] < steps ? kChildSteps[report[0]] : "child setup";
+    s.exec_errno = report[1];
+  }
 
   s.out_r = std::move(out_r);
   s.err_r = std::move(err_r);

@@ -134,10 +134,10 @@ std::optional<uint64_t> parse_keyed_value(std::string_view text, std::string_vie
 
 std::string Box::relative_path() const { return path_.substr(sizeof kRoot - 1); }
 
-std::vector<pid_t> Box::live_members() const {
-  std::vector<pid_t> live;
+std::optional<std::vector<pid_t>> Box::live_members() const {
   auto text = read_file(path_ + "/cgroup.procs");
-  if (!text) return live;
+  if (!text) return std::nullopt;
+  std::vector<pid_t> live;
   std::string_view rest = *text;
   while (!rest.empty()) {
     const size_t end = rest.find('\n');
@@ -226,7 +226,7 @@ BoxSetup create_box(const RunSpec& spec) {
     return s;
   }
   auto abandon = [&path](const char* reason, std::string error) {
-    rmdir(path.c_str());
+    rmdir(path.c_str());  // best effort: the setup already failed with `error`
     BoxSetup out;
     out.reason = reason;
     out.error = std::move(error);

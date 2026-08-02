@@ -10,6 +10,7 @@ extern "C" {  // see spawn.cpp
 
 #include <cerrno>
 #include <charconv>
+#include <cstring>
 #include <memory>
 
 #include "unique_fd.hpp"
@@ -101,18 +102,22 @@ std::optional<std::string> read_proc_cgroup(pid_t pid) {
   return parse_proc_cgroup(*text);
 }
 
-std::vector<pid_t> list_procs() {
-  std::vector<pid_t> pids;
+std::optional<std::vector<pid_t>> list_procs() {
   unique_fd fd(open("/proc", O_RDONLY | O_DIRECTORY | O_CLOEXEC));
-  if (!fd) return pids;
+  if (!fd) return std::nullopt;
   std::unique_ptr<DIR, int (*)(DIR*)> dir(fdopendir(fd.get()), closedir);
-  if (!dir) return pids;
+  if (!dir) return std::nullopt;
   fd.release();  // now owned by `dir`
+  std::vector<pid_t> pids;
+  // readdir() returns nullptr both at the end and on an error; only errno
+  // tells them apart.
+  errno = 0;
   while (dirent* e = readdir(dir.get())) {
     pid_t pid;
     std::string_view name(e->d_name);
     if (parse_int(name, pid)) pids.push_back(pid);
   }
+  if (errno != 0) return std::nullopt;
   return pids;
 }
 
@@ -128,11 +133,16 @@ bool RunTarget::matches(pid_t pid, const ProcStat& st) const {
   return !box.empty() && read_proc_cgroup(pid) == box;
 }
 
-std::vector<pid_t> fallback_live_set(const RunTarget& target) {
-  std::vector<pid_t> live;
-  for (pid_t pid : list_procs()) {
+LiveSet fallback_live_set(const RunTarget& target) {
+  LiveSet live;
+  auto pids = list_procs();
+  if (!pids) {
+    live.error = std::string("read /proc: ") + std::strerror(errno);
+    return live;
+  }
+  for (pid_t pid : *pids) {
     auto st = read_proc_stat(pid);
-    if (st && is_live(*st) && target.in_fallback_set(pid, *st)) live.push_back(pid);
+    if (st && is_live(*st) && target.in_fallback_set(pid, *st)) live.pids.push_back(pid);
   }
   return live;
 }

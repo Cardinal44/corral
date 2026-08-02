@@ -18,6 +18,7 @@ struct Spawned {
   unique_fd pidfd;
   unique_fd out_r, err_r;  // non-blocking
   std::optional<int> exec_errno;
+  const char* exec_step = "execvp";  // the child's call that failed, with exec_errno
   bool box_attach_failed = false;  // the child was killed before it could exec
 };
 

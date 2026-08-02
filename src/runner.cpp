@@ -103,7 +103,12 @@ std::optional<ExitReason> execute(const RunSpec& spec, TimePoint start, const Bo
   bool status_captured;
   if (child.exec_errno) {
     r.spawn_errno = *child.exec_errno;
-    r.error = "cannot execute '" + spec.argv[0] + "': " + std::strerror(*child.exec_errno);
+    if (std::strcmp(child.exec_step, "execvp") == 0) {
+      r.error = "cannot execute '" + spec.argv[0] + "': " + std::strerror(*child.exec_errno);
+    } else {
+      r.error = std::string("child setup failed in ") + child.exec_step + " before executing '" +
+                spec.argv[0] + "': " + std::strerror(*child.exec_errno);
+    }
     trigger = ExitReason::SpawnFailed;
     status_captured = true;  // its exit code is corral's, not the command's
   } else {
@@ -200,7 +205,7 @@ RunResult run(const RunSpec& spec) {
 }
 
 int exit_code_for(const RunResult& r) {
-  if (!r.survivors.empty() || r.teardown_failed) return 120;
+  if (!r.survivors.empty() || r.verify_failed) return 120;
   switch (r.exit_reason) {
     case ExitReason::Exited:      return r.exit_code.value_or(0);
     case ExitReason::Signaled:    return 128 + r.term_signal.value_or(0);

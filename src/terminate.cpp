@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cerrno>
 #include <cstdint>
+#include <cstring>
 #include <string>
 #include <vector>
 
@@ -22,18 +23,31 @@ int tick(TimePoint deadline, int64_t max_ms) {
   return static_cast<int>(std::min(ms_until(deadline), max_ms));
 }
 
-std::vector<pid_t> live_set(const RunTarget& target, const Box* box) {
-  std::vector<pid_t> live = fallback_live_set(target);
-  if (box) {
-    for (pid_t pid : box->live_members()) {
-      if (std::find(live.begin(), live.end(), pid) == live.end()) live.push_back(pid);
+LiveSet live_set(const RunTarget& target, const Box* box) {
+  LiveSet live = fallback_live_set(target);
+  if (!box) return live;
+  auto members = box->live_members();
+  if (!members) {
+    if (live.error.empty()) {
+      live.error = "read " + box->path() + "/cgroup.procs: " + std::strerror(errno);
+    }
+    return live;
+  }
+  for (pid_t pid : *members) {
+    if (std::find(live.pids.begin(), live.pids.end(), pid) == live.pids.end()) {
+      live.pids.push_back(pid);
     }
   }
   return live;
 }
 
-void signal_all(const std::vector<pid_t>& live, int sig, const RunTarget& target) {
-  for (pid_t pid : live) safe_signal(pid, sig, target);
+void signal_all(const LiveSet& live, int sig, const RunTarget& target) {
+  for (pid_t pid : live.pids) safe_signal(pid, sig, target);
+}
+
+void add_error(RunResult& result, const std::string& error) {
+  if (!result.error.empty()) result.error += "; ";
+  result.error += error;
 }
 
 // Reaps every exited child. Returns true once waitpid reports ECHILD.
@@ -65,10 +79,11 @@ void terminate_and_verify(Spawned& child, OutputRouter& out, RunResult& result,
                           std::chrono::milliseconds verify_timeout, TimePoint start,
                           const Box* box) {
   const RunTarget target{getpid(), child.pid, box ? box->relative_path() : std::string()};
-  std::vector<pid_t> live = live_set(target, box);
-  result.termination.leftovers_at_trigger = static_cast<uint64_t>(
-      std::count_if(live.begin(), live.end(), [&](pid_t pid) { return pid != child.pid; }));
+  LiveSet live = live_set(target, box);
+  result.termination.leftovers_at_trigger = static_cast<uint64_t>(std::count_if(
+      live.pids.begin(), live.pids.end(), [&](pid_t pid) { return pid != child.pid; }));
 
+  // An incomplete live set is never "empty", so every phase still runs.
   // The main child is unreaped, so its process group id cannot have been
   // recycled and kill(-pid) reaches only its group.
   if (!live.empty() && grace.count() > 0) {
@@ -102,7 +117,12 @@ void terminate_and_verify(Spawned& child, OutputRouter& out, RunResult& result,
     const bool echild = reap_all(child.pid, result, status_captured);
     if (live.empty() && echild && !(box && box->populated())) break;
     if (now() >= verify_end) {
-      result.survivors = live_set(target, box);
+      result.survivors = live.pids;
+      if (!live.error.empty()) {
+        // Nothing may be reported as verified that could not be checked.
+        result.verify_failed = true;
+        add_error(result, live.error);
+      }
       break;
     }
     service(child, out, result, status_captured, tick(verify_end, kVerifyTickMs));
@@ -114,9 +134,8 @@ void terminate_and_verify(Spawned& child, OutputRouter& out, RunResult& result,
     result.limit_events = box->events();
     std::string error;
     if (!box->remove(verify_end, error)) {
-      result.teardown_failed = true;
-      if (!result.error.empty()) result.error += "; ";
-      result.error += error;
+      result.verify_failed = true;
+      add_error(result, error);
     }
   }
 }
