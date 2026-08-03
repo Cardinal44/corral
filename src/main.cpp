@@ -22,17 +22,17 @@ int fail(const char* what) {
   return 125;
 }
 
-// Returns false with errno set.
-bool write_and_close(corral::unique_fd fd, const std::string& data) {
+// Returns the failed call ("write" or "close") with errno set, or nullptr.
+const char* write_and_close(corral::unique_fd fd, const std::string& data) {
   size_t done = 0;
   while (done < data.size()) {
     const ssize_t n = write(fd.get(), data.data() + done, data.size() - done);
     if (n < 0 && errno == EINTR) continue;
-    if (n < 0) return false;
+    if (n < 0) return "write";
     done += static_cast<size_t>(n);
   }
   // Some filesystems (NFS) report a failed write only at close.
-  return close(fd.release()) == 0;
+  return close(fd.release()) == 0 ? nullptr : "close";
 }
 
 }  // namespace
@@ -75,6 +75,7 @@ int main(int argc, char** argv) {
 
   // Cancellation reaches run() as a readable fd instead of a signal handler.
   sigset_t cancel_signals;
+  // These fail only for an invalid signal number, and the numbers are constants.
   sigemptyset(&cancel_signals);
   sigaddset(&cancel_signals, SIGINT);
   sigaddset(&cancel_signals, SIGTERM);
@@ -97,9 +98,11 @@ int main(int argc, char** argv) {
     std::fprintf(stderr, "corral: warning: %s\n", warning.c_str());
   }
   if (!result.error.empty()) std::fprintf(stderr, "corral: %s\n", result.error.c_str());
-  if (json_fd && !write_and_close(std::move(json_fd), corral::audit_json(result))) {
-    std::fprintf(stderr, "corral: write --json path '%s': %s\n", opts.json_path->c_str(),
-                 std::strerror(errno));
+  if (json_fd) {
+    if (const char* failed = write_and_close(std::move(json_fd), corral::audit_json(result))) {
+      std::fprintf(stderr, "corral: %s --json path '%s': %s\n", failed,
+                   opts.json_path->c_str(), std::strerror(errno));
+    }
   }
   if (!opts.quiet) std::fputs(corral::summary_line(result).c_str(), stderr);
   return result.corral_exit_code;

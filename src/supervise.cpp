@@ -98,7 +98,7 @@ ExitReason capture_status(const Spawned& child, RunResult& result) {
                 WEXITED | WNOWAIT);
   } while (rc < 0 && errno == EINTR);
   if (rc < 0) {
-    result.error = std::string("waitid: ") + std::strerror(errno);
+    result.error = std::string("waitid(P_PIDFD): ") + std::strerror(errno);
     return ExitReason::SetupFailed;
   }
   if (info.si_code == CLD_EXITED) {
