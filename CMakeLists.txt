@@ -68,6 +68,15 @@ add_test(NAME cli_nonexistent_exits_127
 add_test(NAME cli_usage_error_exits_125
   COMMAND sh -c "\"$0\" --wall 5x -- true 2>/dev/null; [ $? -eq 125 ]" ${CORRAL_BIN})
 
+# Memory errors and leaks in corral itself. The child is not traced: it execs
+# the command.
+find_program(VALGRIND valgrind)
+if(VALGRIND)
+  add_test(NAME valgrind_true
+    COMMAND ${VALGRIND} --quiet --leak-check=full --errors-for-leak-kinds=definite,indirect
+            --error-exitcode=99 ${CORRAL_BIN} --quiet -- true)
+endif()
+
 # The audit record goes through /dev/fd/3 into a pipe.
 add_test(NAME cli_json_parses
   COMMAND sh -c "\"$0\" --quiet --json /dev/fd/3 -- true 3>&1 >/dev/null | \"$1\" -m json.tool >/dev/null"
