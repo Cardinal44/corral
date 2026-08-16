@@ -1,0 +1,2022 @@
+{
+  "started_at": "2026-08-16T04:52:15Z",
+  "machine": {
+    "kernel": "7.0.0-31-generic",
+    "arch": "x86_64",
+    "cpus": 2,
+    "distribution": "Ubuntu 26.04 LTS",
+    "timeout": "timeout (uutils coreutils) 0.8.0"
+  },
+  "reps": 5,
+  "runners": [
+    "CE",
+    "CF",
+    "TO",
+    "NV"
+  ],
+  "ce_unavailable": null,
+  "runs": [
+    {
+      "scenario": "F1",
+      "runner": "CE",
+      "rep": 0,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.023,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F1",
+      "runner": "CE",
+      "rep": 1,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.023,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F1",
+      "runner": "CE",
+      "rep": 2,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.027,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F1",
+      "runner": "CE",
+      "rep": 3,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.023,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F1",
+      "runner": "CE",
+      "rep": 4,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.023,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F1",
+      "runner": "CF",
+      "rep": 0,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.023,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F1",
+      "runner": "CF",
+      "rep": 1,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.023,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F1",
+      "runner": "CF",
+      "rep": 2,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.025,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F1",
+      "runner": "CF",
+      "rep": 3,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.024,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F1",
+      "runner": "CF",
+      "rep": 4,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.024,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F1",
+      "runner": "TO",
+      "rep": 0,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.124,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F1",
+      "runner": "TO",
+      "rep": 1,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.124,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F1",
+      "runner": "TO",
+      "rep": 2,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.122,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F1",
+      "runner": "TO",
+      "rep": 3,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.125,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F1",
+      "runner": "TO",
+      "rep": 4,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.124,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F1",
+      "runner": "NV",
+      "rep": 0,
+      "exit_code": 137,
+      "hung": false,
+      "duration_s": 2.073,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F1",
+      "runner": "NV",
+      "rep": 1,
+      "exit_code": 137,
+      "hung": false,
+      "duration_s": 2.075,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F1",
+      "runner": "NV",
+      "rep": 2,
+      "exit_code": 137,
+      "hung": false,
+      "duration_s": 2.073,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F1",
+      "runner": "NV",
+      "rep": 3,
+      "exit_code": 137,
+      "hung": false,
+      "duration_s": 2.075,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F1",
+      "runner": "NV",
+      "rep": 4,
+      "exit_code": 137,
+      "hung": false,
+      "duration_s": 2.074,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F2",
+      "runner": "CE",
+      "rep": 0,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.032,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F2",
+      "runner": "CE",
+      "rep": 1,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.032,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F2",
+      "runner": "CE",
+      "rep": 2,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.033,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F2",
+      "runner": "CE",
+      "rep": 3,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.016,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F2",
+      "runner": "CE",
+      "rep": 4,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.016,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F2",
+      "runner": "CF",
+      "rep": 0,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.016,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F2",
+      "runner": "CF",
+      "rep": 1,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.016,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F2",
+      "runner": "CF",
+      "rep": 2,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.016,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F2",
+      "runner": "CF",
+      "rep": 3,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.016,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F2",
+      "runner": "CF",
+      "rep": 4,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.016,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F2",
+      "runner": "TO",
+      "rep": 0,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.124,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F2",
+      "runner": "TO",
+      "rep": 1,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.126,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F2",
+      "runner": "TO",
+      "rep": 2,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.125,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F2",
+      "runner": "TO",
+      "rep": 3,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.125,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F2",
+      "runner": "TO",
+      "rep": 4,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.123,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F2",
+      "runner": "NV",
+      "rep": 0,
+      "exit_code": 137,
+      "hung": false,
+      "duration_s": 2.072,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F2",
+      "runner": "NV",
+      "rep": 1,
+      "exit_code": 137,
+      "hung": false,
+      "duration_s": 2.073,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F2",
+      "runner": "NV",
+      "rep": 2,
+      "exit_code": 137,
+      "hung": false,
+      "duration_s": 2.073,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F2",
+      "runner": "NV",
+      "rep": 3,
+      "exit_code": 137,
+      "hung": false,
+      "duration_s": 2.073,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F2",
+      "runner": "NV",
+      "rep": 4,
+      "exit_code": 137,
+      "hung": false,
+      "duration_s": 2.074,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F3",
+      "runner": "CE",
+      "rep": 0,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.065,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F3",
+      "runner": "CE",
+      "rep": 1,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.032,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F3",
+      "runner": "CE",
+      "rep": 2,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.065,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F3",
+      "runner": "CE",
+      "rep": 3,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.032,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F3",
+      "runner": "CE",
+      "rep": 4,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.065,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F3",
+      "runner": "CF",
+      "rep": 0,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.032,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F3",
+      "runner": "CF",
+      "rep": 1,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.032,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F3",
+      "runner": "CF",
+      "rep": 2,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.032,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F3",
+      "runner": "CF",
+      "rep": 3,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.032,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F3",
+      "runner": "CF",
+      "rep": 4,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.033,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F3",
+      "runner": "TO",
+      "rep": 0,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.115,
+      "survivors": 1,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F3",
+      "runner": "TO",
+      "rep": 1,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.115,
+      "survivors": 1,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F3",
+      "runner": "TO",
+      "rep": 2,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.116,
+      "survivors": 1,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F3",
+      "runner": "TO",
+      "rep": 3,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.115,
+      "survivors": 1,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F3",
+      "runner": "TO",
+      "rep": 4,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.115,
+      "survivors": 1,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F3",
+      "runner": "NV",
+      "rep": 0,
+      "exit_code": null,
+      "hung": true,
+      "duration_s": 7.001,
+      "survivors": 1,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F3",
+      "runner": "NV",
+      "rep": 1,
+      "exit_code": null,
+      "hung": true,
+      "duration_s": 7.002,
+      "survivors": 1,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F3",
+      "runner": "NV",
+      "rep": 2,
+      "exit_code": null,
+      "hung": true,
+      "duration_s": 7.003,
+      "survivors": 1,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F3",
+      "runner": "NV",
+      "rep": 3,
+      "exit_code": null,
+      "hung": true,
+      "duration_s": 7.002,
+      "survivors": 1,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F3",
+      "runner": "NV",
+      "rep": 4,
+      "exit_code": null,
+      "hung": true,
+      "duration_s": 7.002,
+      "survivors": 1,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F4",
+      "runner": "CE",
+      "rep": 0,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.033,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F4",
+      "runner": "CE",
+      "rep": 1,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.032,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F4",
+      "runner": "CE",
+      "rep": 2,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.064,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F4",
+      "runner": "CE",
+      "rep": 3,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.032,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F4",
+      "runner": "CE",
+      "rep": 4,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.032,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F4",
+      "runner": "CF",
+      "rep": 0,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.016,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F4",
+      "runner": "CF",
+      "rep": 1,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.016,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F4",
+      "runner": "CF",
+      "rep": 2,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.016,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F4",
+      "runner": "CF",
+      "rep": 3,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.034,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F4",
+      "runner": "CF",
+      "rep": 4,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.017,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F4",
+      "runner": "TO",
+      "rep": 0,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.115,
+      "survivors": 1,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F4",
+      "runner": "TO",
+      "rep": 1,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.115,
+      "survivors": 1,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F4",
+      "runner": "TO",
+      "rep": 2,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.115,
+      "survivors": 1,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F4",
+      "runner": "TO",
+      "rep": 3,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.115,
+      "survivors": 1,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F4",
+      "runner": "TO",
+      "rep": 4,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.115,
+      "survivors": 1,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F4",
+      "runner": "NV",
+      "rep": 0,
+      "exit_code": null,
+      "hung": true,
+      "duration_s": 7.001,
+      "survivors": 1,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F4",
+      "runner": "NV",
+      "rep": 1,
+      "exit_code": null,
+      "hung": true,
+      "duration_s": 7.001,
+      "survivors": 1,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F4",
+      "runner": "NV",
+      "rep": 2,
+      "exit_code": null,
+      "hung": true,
+      "duration_s": 7.002,
+      "survivors": 1,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F4",
+      "runner": "NV",
+      "rep": 3,
+      "exit_code": null,
+      "hung": true,
+      "duration_s": 7.003,
+      "survivors": 1,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F4",
+      "runner": "NV",
+      "rep": 4,
+      "exit_code": null,
+      "hung": true,
+      "duration_s": 7.003,
+      "survivors": 1,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F5",
+      "runner": "CE",
+      "rep": 0,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.025,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F5",
+      "runner": "CE",
+      "rep": 1,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.024,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F5",
+      "runner": "CE",
+      "rep": 2,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.025,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F5",
+      "runner": "CE",
+      "rep": 3,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.023,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F5",
+      "runner": "CE",
+      "rep": 4,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.023,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F5",
+      "runner": "CF",
+      "rep": 0,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.023,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F5",
+      "runner": "CF",
+      "rep": 1,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.023,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F5",
+      "runner": "CF",
+      "rep": 2,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.023,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F5",
+      "runner": "CF",
+      "rep": 3,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.023,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F5",
+      "runner": "CF",
+      "rep": 4,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.023,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F5",
+      "runner": "TO",
+      "rep": 0,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.123,
+      "survivors": 1,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F5",
+      "runner": "TO",
+      "rep": 1,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.124,
+      "survivors": 1,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F5",
+      "runner": "TO",
+      "rep": 2,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.125,
+      "survivors": 1,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F5",
+      "runner": "TO",
+      "rep": 3,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.125,
+      "survivors": 1,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F5",
+      "runner": "TO",
+      "rep": 4,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.124,
+      "survivors": 1,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F5",
+      "runner": "NV",
+      "rep": 0,
+      "exit_code": null,
+      "hung": true,
+      "duration_s": 7.003,
+      "survivors": 1,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F5",
+      "runner": "NV",
+      "rep": 1,
+      "exit_code": null,
+      "hung": true,
+      "duration_s": 7.002,
+      "survivors": 1,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F5",
+      "runner": "NV",
+      "rep": 2,
+      "exit_code": null,
+      "hung": true,
+      "duration_s": 7.002,
+      "survivors": 1,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F5",
+      "runner": "NV",
+      "rep": 3,
+      "exit_code": null,
+      "hung": true,
+      "duration_s": 7.004,
+      "survivors": 1,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F5",
+      "runner": "NV",
+      "rep": 4,
+      "exit_code": null,
+      "hung": true,
+      "duration_s": 7.002,
+      "survivors": 1,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F6",
+      "runner": "CE",
+      "rep": 0,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 3.028,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F6",
+      "runner": "CE",
+      "rep": 1,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 3.027,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F6",
+      "runner": "CE",
+      "rep": 2,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 3.027,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F6",
+      "runner": "CE",
+      "rep": 3,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 3.026,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F6",
+      "runner": "CE",
+      "rep": 4,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 3.028,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F6",
+      "runner": "CF",
+      "rep": 0,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 3.027,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F6",
+      "runner": "CF",
+      "rep": 1,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 3.028,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F6",
+      "runner": "CF",
+      "rep": 2,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 3.027,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F6",
+      "runner": "CF",
+      "rep": 3,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 3.026,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F6",
+      "runner": "CF",
+      "rep": 4,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 3.028,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F6",
+      "runner": "TO",
+      "rep": 0,
+      "exit_code": 137,
+      "hung": false,
+      "duration_s": 3.027,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F6",
+      "runner": "TO",
+      "rep": 1,
+      "exit_code": 137,
+      "hung": false,
+      "duration_s": 3.027,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F6",
+      "runner": "TO",
+      "rep": 2,
+      "exit_code": 137,
+      "hung": false,
+      "duration_s": 3.027,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F6",
+      "runner": "TO",
+      "rep": 3,
+      "exit_code": 137,
+      "hung": false,
+      "duration_s": 3.028,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F6",
+      "runner": "TO",
+      "rep": 4,
+      "exit_code": 137,
+      "hung": false,
+      "duration_s": 3.03,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F6",
+      "runner": "NV",
+      "rep": 0,
+      "exit_code": 137,
+      "hung": false,
+      "duration_s": 2.073,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F6",
+      "runner": "NV",
+      "rep": 1,
+      "exit_code": 137,
+      "hung": false,
+      "duration_s": 2.073,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F6",
+      "runner": "NV",
+      "rep": 2,
+      "exit_code": 137,
+      "hung": false,
+      "duration_s": 2.073,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F6",
+      "runner": "NV",
+      "rep": 3,
+      "exit_code": 137,
+      "hung": false,
+      "duration_s": 2.073,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F6",
+      "runner": "NV",
+      "rep": 4,
+      "exit_code": 137,
+      "hung": false,
+      "duration_s": 2.073,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F7",
+      "runner": "CE",
+      "rep": 0,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.021,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F7",
+      "runner": "CE",
+      "rep": 1,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.072,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F7",
+      "runner": "CE",
+      "rep": 2,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.022,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F7",
+      "runner": "CE",
+      "rep": 3,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.022,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F7",
+      "runner": "CE",
+      "rep": 4,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.073,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F7",
+      "runner": "CF",
+      "rep": 0,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.075,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F7",
+      "runner": "CF",
+      "rep": 1,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.073,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F7",
+      "runner": "CF",
+      "rep": 2,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.075,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F7",
+      "runner": "CF",
+      "rep": 3,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.079,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F7",
+      "runner": "CF",
+      "rep": 4,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.081,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F7",
+      "runner": "TO",
+      "rep": 0,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.125,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F7",
+      "runner": "TO",
+      "rep": 1,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.023,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F7",
+      "runner": "TO",
+      "rep": 2,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.073,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F7",
+      "runner": "TO",
+      "rep": 3,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.125,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F7",
+      "runner": "TO",
+      "rep": 4,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.125,
+      "survivors": 1,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F7",
+      "runner": "NV",
+      "rep": 0,
+      "exit_code": null,
+      "hung": true,
+      "duration_s": 7.003,
+      "survivors": 192,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F7",
+      "runner": "NV",
+      "rep": 1,
+      "exit_code": null,
+      "hung": true,
+      "duration_s": 7.001,
+      "survivors": 192,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F7",
+      "runner": "NV",
+      "rep": 2,
+      "exit_code": null,
+      "hung": true,
+      "duration_s": 7.002,
+      "survivors": 192,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F7",
+      "runner": "NV",
+      "rep": 3,
+      "exit_code": null,
+      "hung": true,
+      "duration_s": 7.001,
+      "survivors": 192,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F7",
+      "runner": "NV",
+      "rep": 4,
+      "exit_code": null,
+      "hung": true,
+      "duration_s": 7.003,
+      "survivors": 192,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F8",
+      "runner": "CE",
+      "rep": 0,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.032,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F8",
+      "runner": "CE",
+      "rep": 1,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.032,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F8",
+      "runner": "CE",
+      "rep": 2,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.032,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F8",
+      "runner": "CE",
+      "rep": 3,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.032,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F8",
+      "runner": "CE",
+      "rep": 4,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.016,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F8",
+      "runner": "CF",
+      "rep": 0,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.016,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F8",
+      "runner": "CF",
+      "rep": 1,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.016,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F8",
+      "runner": "CF",
+      "rep": 2,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.016,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F8",
+      "runner": "CF",
+      "rep": 3,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.016,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F8",
+      "runner": "CF",
+      "rep": 4,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.016,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F8",
+      "runner": "TO",
+      "rep": 0,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.115,
+      "survivors": 1,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F8",
+      "runner": "TO",
+      "rep": 1,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.115,
+      "survivors": 1,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F8",
+      "runner": "TO",
+      "rep": 2,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.115,
+      "survivors": 1,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F8",
+      "runner": "TO",
+      "rep": 3,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.115,
+      "survivors": 1,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F8",
+      "runner": "TO",
+      "rep": 4,
+      "exit_code": 0,
+      "hung": false,
+      "duration_s": 0.115,
+      "survivors": 1,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F8",
+      "runner": "NV",
+      "rep": 0,
+      "exit_code": null,
+      "hung": true,
+      "duration_s": 7.001,
+      "survivors": 1,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F8",
+      "runner": "NV",
+      "rep": 1,
+      "exit_code": null,
+      "hung": true,
+      "duration_s": 7.002,
+      "survivors": 1,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F8",
+      "runner": "NV",
+      "rep": 2,
+      "exit_code": null,
+      "hung": true,
+      "duration_s": 7.001,
+      "survivors": 1,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F8",
+      "runner": "NV",
+      "rep": 3,
+      "exit_code": null,
+      "hung": true,
+      "duration_s": 7.001,
+      "survivors": 1,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F8",
+      "runner": "NV",
+      "rep": 4,
+      "exit_code": null,
+      "hung": true,
+      "duration_s": 7.002,
+      "survivors": 1,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F9",
+      "runner": "CE",
+      "rep": 0,
+      "exit_code": 121,
+      "hung": false,
+      "duration_s": 0.115,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F9",
+      "runner": "CE",
+      "rep": 1,
+      "exit_code": 121,
+      "hung": false,
+      "duration_s": 0.115,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F9",
+      "runner": "CE",
+      "rep": 2,
+      "exit_code": 121,
+      "hung": false,
+      "duration_s": 0.165,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F9",
+      "runner": "CE",
+      "rep": 3,
+      "exit_code": 121,
+      "hung": false,
+      "duration_s": 0.116,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F9",
+      "runner": "CE",
+      "rep": 4,
+      "exit_code": 121,
+      "hung": false,
+      "duration_s": 0.117,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F9",
+      "runner": "CF",
+      "rep": 0,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.073,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F9",
+      "runner": "CF",
+      "rep": 1,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.074,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F9",
+      "runner": "CF",
+      "rep": 2,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.073,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F9",
+      "runner": "CF",
+      "rep": 3,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.073,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F9",
+      "runner": "CF",
+      "rep": 4,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.073,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F9",
+      "runner": "TO",
+      "rep": 0,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.123,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F9",
+      "runner": "TO",
+      "rep": 1,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.124,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F9",
+      "runner": "TO",
+      "rep": 2,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.124,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F9",
+      "runner": "TO",
+      "rep": 3,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.125,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F9",
+      "runner": "TO",
+      "rep": 4,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.125,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F9",
+      "runner": "NV",
+      "rep": 0,
+      "exit_code": 137,
+      "hung": false,
+      "duration_s": 2.123,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F9",
+      "runner": "NV",
+      "rep": 1,
+      "exit_code": 137,
+      "hung": false,
+      "duration_s": 2.074,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F9",
+      "runner": "NV",
+      "rep": 2,
+      "exit_code": 137,
+      "hung": false,
+      "duration_s": 2.122,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F9",
+      "runner": "NV",
+      "rep": 3,
+      "exit_code": 137,
+      "hung": false,
+      "duration_s": 2.124,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F9",
+      "runner": "NV",
+      "rep": 4,
+      "exit_code": 137,
+      "hung": false,
+      "duration_s": 2.125,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F10",
+      "runner": "CE",
+      "rep": 0,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.023,
+      "survivors": 0,
+      "cleanup_output": true
+    },
+    {
+      "scenario": "F10",
+      "runner": "CE",
+      "rep": 1,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.022,
+      "survivors": 0,
+      "cleanup_output": true
+    },
+    {
+      "scenario": "F10",
+      "runner": "CE",
+      "rep": 2,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.023,
+      "survivors": 0,
+      "cleanup_output": true
+    },
+    {
+      "scenario": "F10",
+      "runner": "CE",
+      "rep": 3,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.023,
+      "survivors": 0,
+      "cleanup_output": true
+    },
+    {
+      "scenario": "F10",
+      "runner": "CE",
+      "rep": 4,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.023,
+      "survivors": 0,
+      "cleanup_output": true
+    },
+    {
+      "scenario": "F10",
+      "runner": "CF",
+      "rep": 0,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.024,
+      "survivors": 0,
+      "cleanup_output": true
+    },
+    {
+      "scenario": "F10",
+      "runner": "CF",
+      "rep": 1,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.024,
+      "survivors": 0,
+      "cleanup_output": true
+    },
+    {
+      "scenario": "F10",
+      "runner": "CF",
+      "rep": 2,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.023,
+      "survivors": 0,
+      "cleanup_output": true
+    },
+    {
+      "scenario": "F10",
+      "runner": "CF",
+      "rep": 3,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.024,
+      "survivors": 0,
+      "cleanup_output": true
+    },
+    {
+      "scenario": "F10",
+      "runner": "CF",
+      "rep": 4,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.023,
+      "survivors": 0,
+      "cleanup_output": true
+    },
+    {
+      "scenario": "F10",
+      "runner": "TO",
+      "rep": 0,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.124,
+      "survivors": 0,
+      "cleanup_output": true
+    },
+    {
+      "scenario": "F10",
+      "runner": "TO",
+      "rep": 1,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.123,
+      "survivors": 0,
+      "cleanup_output": true
+    },
+    {
+      "scenario": "F10",
+      "runner": "TO",
+      "rep": 2,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.126,
+      "survivors": 0,
+      "cleanup_output": true
+    },
+    {
+      "scenario": "F10",
+      "runner": "TO",
+      "rep": 3,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.124,
+      "survivors": 0,
+      "cleanup_output": true
+    },
+    {
+      "scenario": "F10",
+      "runner": "TO",
+      "rep": 4,
+      "exit_code": 124,
+      "hung": false,
+      "duration_s": 2.124,
+      "survivors": 0,
+      "cleanup_output": true
+    },
+    {
+      "scenario": "F10",
+      "runner": "NV",
+      "rep": 0,
+      "exit_code": 137,
+      "hung": false,
+      "duration_s": 2.074,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F10",
+      "runner": "NV",
+      "rep": 1,
+      "exit_code": 137,
+      "hung": false,
+      "duration_s": 2.073,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F10",
+      "runner": "NV",
+      "rep": 2,
+      "exit_code": 137,
+      "hung": false,
+      "duration_s": 2.073,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F10",
+      "runner": "NV",
+      "rep": 3,
+      "exit_code": 137,
+      "hung": false,
+      "duration_s": 2.074,
+      "survivors": 0,
+      "cleanup_output": false
+    },
+    {
+      "scenario": "F10",
+      "runner": "NV",
+      "rep": 4,
+      "exit_code": 137,
+      "hung": false,
+      "duration_s": 2.075,
+      "survivors": 0,
+      "cleanup_output": false
+    }
+  ],
+  "claim_holds": true,
+  "failures": []
+}
