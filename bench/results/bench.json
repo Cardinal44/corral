@@ -1,0 +1,75 @@
+{
+  "started_at": "2026-08-16T07:08:08Z",
+  "ce_unavailable": null,
+  "latency": [
+    {
+      "scenario": "F5",
+      "mode": "CE",
+      "p50": 9,
+      "p95": 12,
+      "n": 30
+    },
+    {
+      "scenario": "F5",
+      "mode": "CF",
+      "p50": 10,
+      "p95": 12,
+      "n": 30
+    },
+    {
+      "scenario": "F6",
+      "mode": "CE",
+      "p50": 1011,
+      "p95": 1013,
+      "n": 30
+    },
+    {
+      "scenario": "F6",
+      "mode": "CF",
+      "p50": 1010,
+      "p95": 1014,
+      "n": 30
+    },
+    {
+      "scenario": "F10",
+      "mode": "CE",
+      "p50": 9,
+      "p95": 12,
+      "n": 30
+    },
+    {
+      "scenario": "F10",
+      "mode": "CF",
+      "p50": 8,
+      "p95": 12,
+      "n": 30
+    }
+  ],
+  "overhead": [
+    {
+      "runner": "direct",
+      "p50": 0.8301211055368185,
+      "p95": 1.8777931109070778,
+      "n": 200
+    },
+    {
+      "runner": "CE",
+      "p50": 11.33091701194644,
+      "p95": 19.47116805240512,
+      "n": 200
+    },
+    {
+      "runner": "CF",
+      "p50": 6.644017994403839,
+      "p95": 10.013119084760547,
+      "n": 200
+    }
+  ],
+  "machine": {
+    "kernel": "7.0.0-31-generic",
+    "arch": "x86_64",
+    "cpus": 2,
+    "distribution": "Ubuntu 26.04 LTS",
+    "model": "Intel Xeon Processor (Skylake, IBRS, no TSX)"
+  }
+}
