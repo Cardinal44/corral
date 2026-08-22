@@ -131,9 +131,13 @@ std::optional<ExitReason> execute(const RunSpec& spec, TimePoint start, const Bo
     for (pid_t pid : r.survivors) r.error += " " + std::to_string(pid);
   }
   // An OOM kill ends the command by a signal, but the memory limit is the cause.
-  if ((trigger == ExitReason::Exited || trigger == ExitReason::Signaled) &&
-      r.limit_events.oom_kills.value_or(0) > 0) {
+  const bool ended_itself = trigger == ExitReason::Exited || trigger == ExitReason::Signaled;
+  if (ended_itself && r.limit_events.oom_kills.value_or(0) > 0) {
     trigger = ExitReason::MemoryLimit;
+  } else if (ended_itself && r.output.truncated) {
+    // A leftover wrote past the cap during termination. The command's own
+    // status stays in exit_code; the reason reports the cut.
+    trigger = ExitReason::OutputLimit;
   }
   return trigger;
 }

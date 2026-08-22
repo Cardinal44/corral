@@ -429,6 +429,21 @@ void test_output_cap() {
   CHECK(r.stdout_data == "abc");
   CHECK(r.error.empty());
 
+  // The command exits by itself, then a leftover's SIGTERM handler writes past
+  // the cap during termination. Its stderr is discarded, so only stdout races
+  // for the remaining byte.
+  spec = capture_spec({"sh", "-c",
+                       "printf ab; (trap 'printf cdef; exit' TERM; "
+                       "while :; do sleep 0.1; done) 2>/dev/null & exit 0"});
+  spec.max_output_bytes = 3;
+  r = corral::run(spec);
+  CHECK(r.exit_reason == ExitReason::OutputLimit);
+  CHECK(r.corral_exit_code == 122);
+  CHECK(r.exit_code == 0);  // the command's own status is kept
+  CHECK(r.stdout_data == "abc");
+  CHECK(r.output.truncated);
+  CHECK(r.error.empty());
+
   // No cap requested: nothing reported as enforced.
   r = corral::run(capture_spec({"true"}));
   CHECK(!r.limits_enforced.output.has_value());
