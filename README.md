@@ -1,14 +1,28 @@
 # corral
 
 corral runs a command with a time limit. When corral returns, no process that
-the command started is still alive, and corral checks this before it returns.
+the command started is still alive. corral verifies this before it returns. If
+it cannot prove it, corral exits with code 120.
 
-I made corral for AI coding agents and CI jobs. They run shell commands that
-they did not write, and their runners usually stop only the process that they
-started. Background jobs, double-forked daemons, and child processes that hold
-the output pipe then continue to run, or they make the runner hang. Leftover
-processes keep ports, files, and CPU, and the next run can fail because of
-them. corral finds and stops all of them.
+AI coding agents and CI jobs run shell commands that they did not write. A
+typical runner signals its child process or the child's process group, and then
+waits until the output pipes close. This model fails in three common cases:
+
+- A daemon forks twice and calls `setsid()`. It is then in a different process
+  group and session, and its parent is init, so the signal does not reach it.
+- A background process keeps stdout or stderr open. The runner never reads
+  end-of-file, so it hangs after the command exits.
+- A process ignores SIGTERM and continues to run.
+
+Leftover processes keep ports, file locks, and CPU, and the next run can fail
+because of them.
+
+corral controls the full process tree, not only its direct child. In enforced
+mode, the command runs in its own cgroup v2 group, and one write to
+`cgroup.kill` stops every process in the group. Without a cgroup, corral is a
+child subreaper, so orphaned processes become its children. It finds the
+remaining processes through `/proc` and signals them through pidfds. In both
+modes, the run ends when the command exits, not when the pipes close.
 
 corral is not a security sandbox. It does not limit file access, network
 access, or privileges.
