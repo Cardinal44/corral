@@ -1,0 +1,70 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    container: debian:12
+    steps:
+      - name: Install tools
+        run: |
+          apt-get update -q
+          apt-get install -y -q git cmake ninja-build g++ python3 binutils
+      - uses: actions/checkout@v4
+      - name: Check that the tag matches the version in CMakeLists.txt
+        run: |
+          version=$(sed -n 's/^project(corral VERSION \([0-9.]*\).*/\1/p' CMakeLists.txt)
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match version $version in CMakeLists.txt"
+            exit 1
+          fi
+      - name: Build with a static C++ runtime
+        run: |
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_EXE_LINKER_FLAGS="-static-libstdc++ -static-libgcc"
+          cmake --build build
+      - run: ctest --test-dir build --output-on-failure -E integration
+      - name: Check the binary's dependencies
+        run: |
+          readelf -d build/corral | grep NEEDED
+          if readelf -d build/corral | grep NEEDED | grep -qv -E 'libc\.so|ld-linux'; then
+            echo "corral must depend only on glibc"
+            exit 1
+          fi
+          needed=$(objdump -T build/corral | grep -o 'GLIBC_[0-9.]*' | sed 's/GLIBC_//' | sort -V | tail -1)
+          echo "Needs glibc $needed"
+          if [ "$(printf '%s\n2.36\n' "$needed" | sort -V | tail -1)" != 2.36 ]; then
+            echo "corral must run on glibc 2.36"
+            exit 1
+          fi
+      - name: Package
+        run: |
+          name=corral-linux-x86_64
+          mkdir "$name"
+          cp build/corral scripts/corral-enforced README.md LICENSE "$name/"
+          tar -czf "$name.tar.gz" "$name"
+          sha256sum "$name.tar.gz" > "$name.tar.gz.sha256"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release
+          path: corral-linux-x86_64.tar.gz*
+
+  publish:
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" corral-linux-x86_64.tar.gz \
+            corral-linux-x86_64.tar.gz.sha256 --repo "$GITHUB_REPOSITORY" \
+            --title "corral $GITHUB_REF_NAME" --generate-notes

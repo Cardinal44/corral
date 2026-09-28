@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
-CORRAL_BIN="${CORRAL_BIN:-$(dirname "$0")/../build/corral}"
+here="$(dirname "$0")"
+# In a release archive, corral is next to this script.
+if [ -z "${CORRAL_BIN:-}" ]; then
+  if [ -x "$here/corral" ]; then CORRAL_BIN="$here/corral"; else CORRAL_BIN="$here/../build/corral"; fi
+fi
 exec systemd-run --user --scope -p Delegate=yes --quiet --collect -- \
   "$CORRAL_BIN" --cgroup-mode=enforced "$@"

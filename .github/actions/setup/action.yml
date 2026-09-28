@@ -1,0 +1,15 @@
+name: Set up the build and test tools
+description: Installs Ninja and valgrind, and starts a systemd user session for enforced mode.
+runs:
+  using: composite
+  steps:
+    - name: Install tools
+      shell: bash
+      run: sudo apt-get update -q && sudo apt-get install -y -q ninja-build valgrind clang
+    - name: Start a systemd user session
+      shell: bash
+      run: |
+        sudo loginctl enable-linger "$USER"
+        runtime="/run/user/$(id -u)"
+        for _ in $(seq 30); do [ -S "$runtime/bus" ] && break; sleep 1; done
+        echo "XDG_RUNTIME_DIR=$runtime" >> "$GITHUB_ENV"
